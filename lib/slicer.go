@@ -1,5 +1,7 @@
 package lib
 
+import "errors"
+
 type Equaler interface {
 	Equal(Equaler) (bool, error)
 }
@@ -60,4 +62,46 @@ func InFirstOnly(sl1, sl2 []Equaler) ([]Equaler, error) {
 	}
 
 	return result, nil
+}
+
+func FirstOrDefault(sl []interface{}, f func(interface{}) bool) interface{} {
+	for _, slEl := range sl {
+		if f(slEl) {
+			return slEl
+		}
+	}
+
+	return nil
+}
+
+func First(sl []interface{}, f func(interface{}) bool) (interface{}, error) {
+	first := FirstOrDefault(sl, f)
+
+	if first == nil {
+		return nil, errors.New("Not found")
+	}
+
+	return first, nil
+}
+
+func Where(sl []interface{}, f func(interface{}) bool) []interface{} {
+	res := make([]interface{}, 0)
+
+	for _, slEl := range sl {
+		if f(slEl) {
+			res = append(res, slEl)
+		}
+	}
+
+	return res
+}
+
+func Select(sl []interface{}, f func(interface{}) interface{}) []interface{} {
+	res := make([]interface{}, len(sl))
+
+	for i := range sl {
+		res[i] = f(sl[i])
+	}
+
+	return res
 }

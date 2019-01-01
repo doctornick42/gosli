@@ -2,11 +2,24 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/doctornick42/gosli/experiment"
+	"github.com/doctornick42/gosli/gen"
 )
 
+//argsWithoutProg := os.Args[1:]
 func main() {
+	err := gen.Run(os.Args[1:])
+
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func fakeStuff() {
+
 	sl := []*experiment.TestType{
 		&experiment.TestType{
 			A: 98,
