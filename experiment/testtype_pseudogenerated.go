@@ -67,16 +67,6 @@ func processSliceOperation(sl1, sl2 []*TestType,
 	return res, nil
 }
 
-func FirstOrDefault(sl []*TestType, f func(*TestType) bool) *TestType {
-	for _, slEl := range sl {
-		if f(slEl) {
-			return slEl
-		}
-	}
-
-	return nil
-}
-
 func First(sl []*TestType, f func(*TestType) bool) (*TestType, error) {
 	first := FirstOrDefault(sl, f)
 
