@@ -38,20 +38,19 @@ func Run(args []string) error {
 	generateProcessSliceOperation(f, typeName)
 	generateGetUnion(f, typeName)
 	generateInFirstOnly(f, typeName)
-	fmt.Printf("%#v\r\n", f)
 
-	genFileName := getGeneratedFileName(originFilePath)
+	genFileName := getGeneratedFileName(originFilePath, typeName)
+
 	log.Printf("Generated filename: %s", genFileName)
 	err = f.Save(genFileName)
 	if err != nil {
 		return err
 	}
 
-	genFileName = getEqualGeneratedFileName(originFilePath)
+	genFileName = getEqualGeneratedFileName(originFilePath, typeName)
 	if _, err := os.Stat(genFileName); os.IsNotExist(err) {
 		f = NewFile(moduleName)
 		generateEqualToFillManually(f, typeName)
-		fmt.Printf("%#v\r\n", f)
 
 		log.Printf("Generated filename: %s", genFileName)
 		return f.Save(genFileName)
@@ -76,27 +75,25 @@ func getModuleName(originFilePath string) (string, error) {
 	return firstLineSplitted[len(firstLineSplitted)-1], nil
 }
 
-func getGeneratedFileName(originFilePath string) string {
-	return generateFileName(originFilePath, "generated")
+func getGeneratedFileName(originFilePath, typeName string) string {
+	return generateFileName(originFilePath, "generated", typeName)
 }
 
-func getEqualGeneratedFileName(originFilePath string) string {
-	return generateFileName(originFilePath, "equal")
+func getEqualGeneratedFileName(originFilePath, typeName string) string {
+	return generateFileName(originFilePath, "equal", typeName)
 }
 
-func generateFileName(originFilePath string, suffix string) string {
+func generateFileName(originFilePath, suffix, typeName string) string {
 	splitted := strings.Split(originFilePath, "/")
 
 	shortFileName := splitted[len(splitted)-1]
-	withoutExtension := strings.Split(shortFileName, ".")[0]
-
-	generatedName := withoutExtension + "_" + suffix + ".go"
+	generatedName := strings.ToLower(typeName) + "_" + suffix + ".go"
 
 	return strings.Replace(originFilePath, shortFileName, generatedName, 1)
 }
 
 func generateFirstOrDefault(f *File, typeName string) {
-	f.Func().Id("FirstOrDefault").
+	f.Func().Id(typeName+"FirstOrDefault").
 		Params(
 			Id("sl").Id("[]*"+typeName),
 			Id("f").Id("func(*"+typeName+") bool"),
@@ -117,14 +114,14 @@ func generateFirstOrDefault(f *File, typeName string) {
 }
 
 func generateFirst(f *File, typeName string) {
-	f.Func().Id("First").
+	f.Func().Id(typeName+"First").
 		Params(
 			Id("sl").Id("[]*"+typeName),
 			Id("f").Id("func(*"+typeName+") bool"),
 		).
 		Params(Id("*"+typeName), Error()).
 		Block(
-			Id("first").Op(":=").Id("FirstOrDefault").Call(Id("sl"), Id("f")),
+			Id("first").Op(":=").Id(typeName+"FirstOrDefault").Call(Id("sl"), Id("f")),
 			If(
 				Id("first").Op("==").Nil(),
 			).Block(
@@ -135,7 +132,7 @@ func generateFirst(f *File, typeName string) {
 }
 
 func generateWhere(f *File, typeName string) {
-	f.Func().Id("Where").
+	f.Func().Id(typeName+"Where").
 		Params(
 			Id("sl").Id("[]*"+typeName),
 			Id("f").Id("func(*"+typeName+") bool"),
@@ -158,7 +155,7 @@ func generateWhere(f *File, typeName string) {
 }
 
 func generateSelect(f *File, typeName string) {
-	f.Func().Id("Select").
+	f.Func().Id(typeName+"Select").
 		Params(
 			Id("sl").Id("[]*"+typeName),
 			Id("f").Id(fmt.Sprintf("func(*%s) interface{}", typeName)),
@@ -217,7 +214,7 @@ func generateEqualImplementation(f *File, typeName string) {
 
 func generateSliceToEqualers(f *File, typeName string) {
 	f.Func().
-		Id("sliceToEqualers").
+		Id(typeName+"SliceToEqualers").
 		Params(
 			Id("sl").Id("[]*"+typeName),
 		).
@@ -237,7 +234,7 @@ func generateSliceToEqualers(f *File, typeName string) {
 
 func generateSliceToInterfacesSlice(f *File, typeName string) {
 	f.Func().
-		Id("sliceToInterfacesSlice").
+		Id(typeName+"SliceToInterfacesSlice").
 		Params(
 			Id("sl").Id("[]*"+typeName),
 		).
@@ -267,7 +264,7 @@ func generateContains(f *File, typeName string) {
 			Error(),
 		).
 		Block(
-			Id("equalerSl").Op(":=").Id("sliceToEqualers").Call(Id("sl")),
+			Id("equalerSl").Op(":=").Id(typeName+"SliceToEqualers").Call(Id("sl")),
 			Return(
 				Qual("github.com/doctornick42/gosli/lib", "Contains").
 					Call(Id("equalerSl"), Id("el")),
@@ -277,7 +274,7 @@ func generateContains(f *File, typeName string) {
 
 func generateProcessSliceOperation(f *File, typeName string) {
 	f.Func().
-		Id("processSliceOperation").
+		Id(typeName+"ProcessSliceOperation").
 		Params(
 			Id("sl1, sl2").Id("[]*"+typeName),
 			Id("f").Func().Params(
@@ -293,8 +290,8 @@ func generateProcessSliceOperation(f *File, typeName string) {
 			Error(),
 		).
 		Block(
-			Id("equalerSl1").Op(":=").Id("sliceToEqualers").Call(Id("sl1")),
-			Id("equalerSl2").Op(":=").Id("sliceToEqualers").Call(Id("sl2")),
+			Id("equalerSl1").Op(":=").Id(typeName+"SliceToEqualers").Call(Id("sl1")),
+			Id("equalerSl2").Op(":=").Id(typeName+"SliceToEqualers").Call(Id("sl2")),
 			Id("untypedRes, err").Op(":=").Id("f").Call(Id("equalerSl1"), Id("equalerSl2")),
 
 			If(
@@ -327,7 +324,7 @@ func generateGetUnion(f *File, typeName string) {
 		).
 		Block(
 			Return(
-				Id("processSliceOperation").Call(
+				Id(typeName+"ProcessSliceOperation").Call(
 					Id("sl1, sl2"),
 					Qual("github.com/doctornick42/gosli/lib", "GetUnion"),
 				),
@@ -347,7 +344,7 @@ func generateInFirstOnly(f *File, typeName string) {
 		).
 		Block(
 			Return(
-				Id("processSliceOperation").Call(
+				Id(typeName+"ProcessSliceOperation").Call(
 					Id("sl1, sl2"),
 					Qual("github.com/doctornick42/gosli/lib", "InFirstOnly"),
 				),

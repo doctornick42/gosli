@@ -1,6 +1,10 @@
 package experiment
 
-type TestType struct {
+type FakeType struct {
 	A int
 	B string
+}
+
+type TestType struct {
+	C string
 }
