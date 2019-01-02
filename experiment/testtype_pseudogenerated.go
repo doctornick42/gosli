@@ -66,35 +66,3 @@ func processSliceOperation(sl1, sl2 []*TestType,
 
 	return res, nil
 }
-
-func First(sl []*TestType, f func(*TestType) bool) (*TestType, error) {
-	first := FirstOrDefault(sl, f)
-
-	if first == nil {
-		return nil, errors.New("Not found")
-	}
-
-	return first, nil
-}
-
-func Where(sl []*TestType, f func(*TestType) bool) []*TestType {
-	res := make([]*TestType, 0)
-
-	for _, slEl := range sl {
-		if f(slEl) {
-			res = append(res, slEl)
-		}
-	}
-
-	return res
-}
-
-func Select(sl []*TestType, f func(*TestType) *TestType) []*TestType {
-	res := make([]*TestType, len(sl))
-
-	for i := range sl {
-		res[i] = f(sl[i])
-	}
-
-	return res
-}
