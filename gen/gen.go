@@ -32,6 +32,9 @@ func Run(args []string) error {
 	generateWhere(f, typeName)
 	generateEqualImplementation(f, typeName)
 	generateSelect(f, typeName)
+	generateSliceToEqualers(f, typeName)
+	generateSliceToInterfacesSlice(f, typeName)
+	generateContains(f, typeName)
 	fmt.Printf("%#v\r\n", f)
 
 	genFileName := getGeneratedFileName(originFilePath)
@@ -206,5 +209,65 @@ func generateEqualImplementation(f *File, typeName string) {
 			),
 
 			Return(Id("r.equal").Call(Id("anotherCasted")), Nil()),
+		)
+}
+
+func generateSliceToEqualers(f *File, typeName string) {
+	f.Func().
+		Id("sliceToEqualers").
+		Params(
+			Id("sl").Id("[]*"+typeName),
+		).
+		Index().Qual("github.com/doctornick42/gosli/lib", "Equaler").
+		Block(
+			Id("equalerSl").Op(":=").Make(Id("[]lib.Equaler"), Len(Id("sl"))),
+
+			For(
+				Id("i").Op(":=").Range().Id("sl"),
+			).Block(
+				Id("equalerSl[i]").Op("=").Id("sl[i]"),
+			),
+
+			Return(Id("equalerSl")),
+		)
+}
+
+func generateSliceToInterfacesSlice(f *File, typeName string) {
+	f.Func().
+		Id("sliceToInterfacesSlice").
+		Params(
+			Id("sl").Id("[]*"+typeName),
+		).
+		Id("[]interface{}").
+		Block(
+			Id("equalerSl").Op(":=").Make(Id("[]interface{}"), Len(Id("sl"))),
+
+			For(
+				Id("i").Op(":=").Range().Id("sl"),
+			).Block(
+				Id("equalerSl[i]").Op("=").Id("sl[i]"),
+			),
+
+			Return(Id("equalerSl")),
+		)
+}
+
+func generateContains(f *File, typeName string) {
+	f.Func().
+		Id(typeName+"Contains").
+		Params(
+			Id("sl").Id("[]*"+typeName),
+			Id("el").Id("*"+typeName),
+		).
+		Params(
+			Bool(),
+			Error(),
+		).
+		Block(
+			Id("equalerSl").Op(":=").Id("sliceToEqualers").Call(Id("sl")),
+			Return(
+				Qual("github.com/doctornick42/gosli/lib", "Contains").
+					Call(Id("equalerSl"), Id("el")),
+			),
 		)
 }

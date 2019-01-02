@@ -2,29 +2,6 @@ package experiment
 
 //all code after this line is pseudo-generated:
 
-// func sliceToEqualers(sl []*TestType) []lib.Equaler {
-// 	equalerSl := make([]lib.Equaler, len(sl))
-// 	for i := range sl {
-// 		equalerSl[i] = sl[i]
-// 	}
-
-// 	return equalerSl
-// }
-
-// func sliceToInterfacesSlice(sl []*TestType) []interface{} {
-// 	equalerSl := make([]interface{}, len(sl))
-// 	for i := range sl {
-// 		equalerSl[i] = sl[i]
-// 	}
-
-// 	return equalerSl
-// }
-
-// func TestTypeContains(sl []*TestType, el *TestType) (bool, error) {
-// 	equalerSl := sliceToEqualers(sl)
-// 	return lib.Contains(equalerSl, el)
-// }
-
 // func TestTypeGetUnion(sl1, sl2 []*TestType) ([]*TestType, error) {
 // 	return processSliceOperation(sl1, sl2, lib.GetUnion)
 // }
