@@ -30,6 +30,8 @@ func Run(args []string) error {
 	generateFirstOrDefault(f, typeName)
 	generateFirst(f, typeName)
 	generateWhere(f, typeName)
+	generateEqualImplementation(f, typeName)
+	generateSelect(f, typeName)
 	fmt.Printf("%#v\r\n", f)
 
 	genFileName := getGeneratedFileName(originFilePath)
@@ -39,14 +41,17 @@ func Run(args []string) error {
 		return err
 	}
 
-	f = NewFile(moduleName)
-	generateEqualToFillManually(f, typeName)
-	fmt.Printf("%#v\r\n", f)
-
 	genFileName = getEqualGeneratedFileName(originFilePath)
-	log.Printf("Generated filename: %s", genFileName)
+	if _, err := os.Stat(genFileName); os.IsNotExist(err) {
+		f = NewFile(moduleName)
+		generateEqualToFillManually(f, typeName)
+		fmt.Printf("%#v\r\n", f)
 
-	return f.Save(genFileName)
+		log.Printf("Generated filename: %s", genFileName)
+		return f.Save(genFileName)
+	}
+
+	return nil
 }
 
 func getModuleName(originFilePath string) (string, error) {
@@ -150,11 +155,11 @@ func generateSelect(f *File, typeName string) {
 	f.Func().Id("Select").
 		Params(
 			Id("sl").Id("[]*"+typeName),
-			Id("f").Id(fmt.Sprintf("func(*%s) %s", typeName, typeName)),
+			Id("f").Id(fmt.Sprintf("func(*%s) interface{}", typeName)),
 		).
-		Id("[]*"+typeName).
+		Id("[]interface{}").
 		Block(
-			Id("res").Op(":=").Make(Id("[]*"+typeName), Len(Id("sl"))),
+			Id("res").Op(":=").Make(Id("[]interface{}"), Len(Id("sl"))),
 
 			For(
 				Id("i").Op(":=").Range().Id("sl").Block(
@@ -177,5 +182,29 @@ func generateEqualToFillManually(f *File, typeName string) {
 		Bool().
 		Block(
 			Comment("`equal` method has to be implemented manually"),
+		)
+}
+
+func generateEqualImplementation(f *File, typeName string) {
+	f.Func().
+		Params(Id("r").Id("*"+typeName)).
+		Id("Equal").
+		Params(
+			Id("another").Qual("github.com/doctornick42/gosli/lib", "Equaler"),
+		).
+		Params(
+			Bool(),
+			Error(),
+		).
+		Block(
+			Id("anotherCasted, ok").Op(":=").Id("another").Dot(fmt.Sprintf("(*%s)", typeName)),
+
+			If(
+				Id("!ok"),
+			).Block(
+				Return(False(), Qual("errors", "New").Call(Lit("Types mismatch"))),
+			),
+
+			Return(Id("r.equal").Call(Id("anotherCasted")), Nil()),
 		)
 }
