@@ -35,6 +35,9 @@ func Run(args []string) error {
 	generateSliceToEqualers(f, typeName)
 	generateSliceToInterfacesSlice(f, typeName)
 	generateContains(f, typeName)
+	generateProcessSliceOperation(f, typeName)
+	generateGetUnion(f, typeName)
+	generateInFirstOnly(f, typeName)
 	fmt.Printf("%#v\r\n", f)
 
 	genFileName := getGeneratedFileName(originFilePath)
@@ -268,6 +271,86 @@ func generateContains(f *File, typeName string) {
 			Return(
 				Qual("github.com/doctornick42/gosli/lib", "Contains").
 					Call(Id("equalerSl"), Id("el")),
+			),
+		)
+}
+
+func generateProcessSliceOperation(f *File, typeName string) {
+	f.Func().
+		Id("processSliceOperation").
+		Params(
+			Id("sl1, sl2").Id("[]*"+typeName),
+			Id("f").Func().Params(
+				Index().Qual("github.com/doctornick42/gosli/lib", "Equaler"),
+				Index().Qual("github.com/doctornick42/gosli/lib", "Equaler"),
+			).Params(
+				Index().Qual("github.com/doctornick42/gosli/lib", "Equaler"),
+				Error(),
+			),
+		).
+		Params(
+			Id("[]*"+typeName),
+			Error(),
+		).
+		Block(
+			Id("equalerSl1").Op(":=").Id("sliceToEqualers").Call(Id("sl1")),
+			Id("equalerSl2").Op(":=").Id("sliceToEqualers").Call(Id("sl2")),
+			Id("untypedRes, err").Op(":=").Id("f").Call(Id("equalerSl1"), Id("equalerSl2")),
+
+			If(
+				Id("err").Op("!=").Nil(),
+			).Block(
+				Return(Nil(), Id("err")),
+			),
+
+			Id("res").Op(":=").Make(Index().Id("*"+typeName), Len(Id("untypedRes"))),
+
+			For(
+				Id("i").Op(":=").Range().Id("untypedRes"),
+			).Block(
+				Id("res[i]").Op("=").Id("untypedRes[i]").Dot(fmt.Sprintf("(*%s)", typeName)),
+			),
+
+			Return(Id("res"), Nil()),
+		)
+}
+
+func generateGetUnion(f *File, typeName string) {
+	f.Func().
+		Id(typeName+"GetUnion").
+		Params(
+			Id("sl1, sl2").Index().Id("*"+typeName),
+		).
+		Params(
+			Index().Id("*"+typeName),
+			Error(),
+		).
+		Block(
+			Return(
+				Id("processSliceOperation").Call(
+					Id("sl1, sl2"),
+					Qual("github.com/doctornick42/gosli/lib", "GetUnion"),
+				),
+			),
+		)
+}
+
+func generateInFirstOnly(f *File, typeName string) {
+	f.Func().
+		Id(typeName+"InFirstOnly").
+		Params(
+			Id("sl1, sl2").Index().Id("*"+typeName),
+		).
+		Params(
+			Index().Id("*"+typeName),
+			Error(),
+		).
+		Block(
+			Return(
+				Id("processSliceOperation").Call(
+					Id("sl1, sl2"),
+					Qual("github.com/doctornick42/gosli/lib", "InFirstOnly"),
+				),
 			),
 		)
 }
