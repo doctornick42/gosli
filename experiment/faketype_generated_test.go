@@ -66,7 +66,7 @@ func (ts *FakeTypeTestSuite) TestFakeTypeFirstOrDefault() {
 		ts.initDependencies()
 
 		ts.T().Run(tc.name, func(t *testing.T) {
-			res := FakeTypeFirstOrDefault(tc.sl, tc.filter)
+			res := FakeTypeSlice().FirstOrDefault(tc.sl, tc.filter)
 
 			if tc.expectedRes == nil {
 				assert.Nil(t, res)
@@ -128,7 +128,7 @@ func (ts *FakeTypeTestSuite) TestFakeTypeFirst() {
 		ts.initDependencies()
 
 		ts.T().Run(tc.name, func(t *testing.T) {
-			res, err := FakeTypeFirst(tc.sl, tc.filter)
+			res, err := FakeTypeSlice().First(tc.sl, tc.filter)
 
 			if tc.expectedErr == nil {
 				isEqualToExpected, err := res.Equal(tc.expectedRes)
@@ -195,7 +195,7 @@ func (ts *FakeTypeTestSuite) TestFakeTypeWhere() {
 		ts.initDependencies()
 
 		ts.T().Run(tc.name, func(t *testing.T) {
-			res := FakeTypeWhere(tc.sl, tc.filter)
+			res := FakeTypeSlice().Where(tc.sl, tc.filter)
 
 			assert.EqualValues(t, tc.expectedRes, res)
 		})
@@ -254,7 +254,7 @@ func (ts *FakeTypeTestSuite) TestFakeTypeSelect() {
 		ts.initDependencies()
 
 		ts.T().Run(tc.name, func(t *testing.T) {
-			res := FakeTypeSelect(tc.sl, tc.filter)
+			res := FakeTypeSlice().Select(tc.sl, tc.filter)
 
 			assert.EqualValues(t, tc.expectedRes, res)
 		})

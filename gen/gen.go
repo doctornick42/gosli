@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"unicode"
 
 	. "github.com/dave/jennifer/jen"
 )
@@ -27,10 +28,10 @@ func Run(args []string) error {
 	log.Printf("Module name: %s", moduleName)
 
 	f := NewFile(moduleName)
+	generateInfrastructure(f, typeName)
 	generateFirstOrDefault(f, typeName)
 	generateFirst(f, typeName)
 	generateWhere(f, typeName)
-	generateEqualImplementation(f, typeName)
 	generateSelect(f, typeName)
 	generateSliceToEqualers(f, typeName)
 	generateSliceToInterfacesSlice(f, typeName)
@@ -38,6 +39,7 @@ func Run(args []string) error {
 	generateProcessSliceOperation(f, typeName)
 	generateGetUnion(f, typeName)
 	generateInFirstOnly(f, typeName)
+	generateEqualImplementation(f, typeName)
 
 	genFileName := getGeneratedFileName(originFilePath, typeName)
 
@@ -93,7 +95,11 @@ func generateFileName(originFilePath, suffix, typeName string) string {
 }
 
 func generateFirstOrDefault(f *File, typeName string) {
-	f.Func().Id(typeName+"FirstOrDefault").
+	f.Func().
+		Params(
+			Id("r").Id("*"+getStructName(typeName)),
+		).
+		Id("FirstOrDefault").
 		Params(
 			Id("sl").Id("[]*"+typeName),
 			Id("f").Id("func(*"+typeName+") bool"),
@@ -114,14 +120,18 @@ func generateFirstOrDefault(f *File, typeName string) {
 }
 
 func generateFirst(f *File, typeName string) {
-	f.Func().Id(typeName+"First").
+	f.Func().
+		Params(
+			Id("r").Id("*"+getStructName(typeName)),
+		).
+		Id("First").
 		Params(
 			Id("sl").Id("[]*"+typeName),
 			Id("f").Id("func(*"+typeName+") bool"),
 		).
 		Params(Id("*"+typeName), Error()).
 		Block(
-			Id("first").Op(":=").Id(typeName+"FirstOrDefault").Call(Id("sl"), Id("f")),
+			Id("first").Op(":=").Id("r.FirstOrDefault").Call(Id("sl"), Id("f")),
 			If(
 				Id("first").Op("==").Nil(),
 			).Block(
@@ -132,7 +142,11 @@ func generateFirst(f *File, typeName string) {
 }
 
 func generateWhere(f *File, typeName string) {
-	f.Func().Id(typeName+"Where").
+	f.Func().
+		Params(
+			Id("r").Id("*"+getStructName(typeName)),
+		).
+		Id("Where").
 		Params(
 			Id("sl").Id("[]*"+typeName),
 			Id("f").Id("func(*"+typeName+") bool"),
@@ -155,7 +169,11 @@ func generateWhere(f *File, typeName string) {
 }
 
 func generateSelect(f *File, typeName string) {
-	f.Func().Id(typeName+"Select").
+	f.Func().
+		Params(
+			Id("r").Id("*"+getStructName(typeName)),
+		).
+		Id("Select").
 		Params(
 			Id("sl").Id("[]*"+typeName),
 			Id("f").Id(fmt.Sprintf("func(*%s) interface{}", typeName)),
@@ -214,7 +232,10 @@ func generateEqualImplementation(f *File, typeName string) {
 
 func generateSliceToEqualers(f *File, typeName string) {
 	f.Func().
-		Id(typeName+"SliceToEqualers").
+		Params(
+			Id("r").Id("*"+getStructName(typeName)),
+		).
+		Id("sliceToEqualers").
 		Params(
 			Id("sl").Id("[]*"+typeName),
 		).
@@ -234,7 +255,10 @@ func generateSliceToEqualers(f *File, typeName string) {
 
 func generateSliceToInterfacesSlice(f *File, typeName string) {
 	f.Func().
-		Id(typeName+"SliceToInterfacesSlice").
+		Params(
+			Id("r").Id("*"+getStructName(typeName)),
+		).
+		Id("sliceToInterfacesSlice").
 		Params(
 			Id("sl").Id("[]*"+typeName),
 		).
@@ -254,7 +278,10 @@ func generateSliceToInterfacesSlice(f *File, typeName string) {
 
 func generateContains(f *File, typeName string) {
 	f.Func().
-		Id(typeName+"Contains").
+		Params(
+			Id("r").Id("*"+getStructName(typeName)),
+		).
+		Id("Contains").
 		Params(
 			Id("sl").Id("[]*"+typeName),
 			Id("el").Id("*"+typeName),
@@ -264,7 +291,7 @@ func generateContains(f *File, typeName string) {
 			Error(),
 		).
 		Block(
-			Id("equalerSl").Op(":=").Id(typeName+"SliceToEqualers").Call(Id("sl")),
+			Id("equalerSl").Op(":=").Id("r.sliceToEqualers").Call(Id("sl")),
 			Return(
 				Qual("github.com/doctornick42/gosli/lib", "Contains").
 					Call(Id("equalerSl"), Id("el")),
@@ -274,7 +301,10 @@ func generateContains(f *File, typeName string) {
 
 func generateProcessSliceOperation(f *File, typeName string) {
 	f.Func().
-		Id(typeName+"ProcessSliceOperation").
+		Params(
+			Id("r").Id("*"+getStructName(typeName)),
+		).
+		Id("processSliceOperation").
 		Params(
 			Id("sl1, sl2").Id("[]*"+typeName),
 			Id("f").Func().Params(
@@ -290,8 +320,8 @@ func generateProcessSliceOperation(f *File, typeName string) {
 			Error(),
 		).
 		Block(
-			Id("equalerSl1").Op(":=").Id(typeName+"SliceToEqualers").Call(Id("sl1")),
-			Id("equalerSl2").Op(":=").Id(typeName+"SliceToEqualers").Call(Id("sl2")),
+			Id("equalerSl1").Op(":=").Id("r.sliceToEqualers").Call(Id("sl1")),
+			Id("equalerSl2").Op(":=").Id("r.sliceToEqualers").Call(Id("sl2")),
 			Id("untypedRes, err").Op(":=").Id("f").Call(Id("equalerSl1"), Id("equalerSl2")),
 
 			If(
@@ -314,7 +344,10 @@ func generateProcessSliceOperation(f *File, typeName string) {
 
 func generateGetUnion(f *File, typeName string) {
 	f.Func().
-		Id(typeName+"GetUnion").
+		Params(
+			Id("r").Id("*"+getStructName(typeName)),
+		).
+		Id("GetUnion").
 		Params(
 			Id("sl1, sl2").Index().Id("*"+typeName),
 		).
@@ -324,7 +357,7 @@ func generateGetUnion(f *File, typeName string) {
 		).
 		Block(
 			Return(
-				Id(typeName+"ProcessSliceOperation").Call(
+				Id("r.processSliceOperation").Call(
 					Id("sl1, sl2"),
 					Qual("github.com/doctornick42/gosli/lib", "GetUnion"),
 				),
@@ -334,7 +367,10 @@ func generateGetUnion(f *File, typeName string) {
 
 func generateInFirstOnly(f *File, typeName string) {
 	f.Func().
-		Id(typeName+"InFirstOnly").
+		Params(
+			Id("r").Id("*"+getStructName(typeName)),
+		).
+		Id("InFirstOnly").
 		Params(
 			Id("sl1, sl2").Index().Id("*"+typeName),
 		).
@@ -344,10 +380,104 @@ func generateInFirstOnly(f *File, typeName string) {
 		).
 		Block(
 			Return(
-				Id(typeName+"ProcessSliceOperation").Call(
+				Id("r.processSliceOperation").Call(
 					Id("sl1, sl2"),
 					Qual("github.com/doctornick42/gosli/lib", "InFirstOnly"),
 				),
 			),
+		)
+}
+
+func firstRuneToLower(origin string) string {
+	runes := []rune(origin)
+	runes[0] = unicode.ToLower(runes[0])
+	return string(runes)
+}
+
+func getStructName(typeName string) string {
+	return firstRuneToLower(typeName) + "_struct"
+}
+
+func getVarName(typeName string) string {
+	return firstRuneToLower(typeName) + "_var"
+}
+
+func getInterfaceName(typeName string) string {
+	return firstRuneToLower(typeName) + "_interface"
+}
+
+func generateInfrastructure(f *File, typeName string) {
+	structName := getStructName(typeName)
+	varName := getVarName(typeName)
+	interfaceName := getInterfaceName(typeName)
+
+	f.Var().Id(varName).Id(interfaceName)
+
+	f.Type().Id(structName).Struct()
+
+	f.Type().Id(interfaceName).Interface(
+		Id("Where").
+			Params(
+				Id("sl").Id("[]*"+typeName),
+				Id("f").Id("func(*"+typeName+") bool"),
+			).
+			Id("[]*"+typeName),
+
+		Id("FirstOrDefault").
+			Params(
+				Id("sl").Id("[]*"+typeName),
+				Id("f").Id("func(*"+typeName+") bool"),
+			).
+			Id("*"+typeName),
+
+		Id("First").
+			Params(
+				Id("sl").Id("[]*"+typeName),
+				Id("f").Id("func(*"+typeName+") bool"),
+			).
+			Params(Id("*"+typeName), Error()),
+
+		Id("Select").
+			Params(
+				Id("sl").Id("[]*"+typeName),
+				Id("f").Id(fmt.Sprintf("func(*%s) interface{}", typeName)),
+			).
+			Id("[]interface{}"),
+
+		Id("Contains").
+			Params(
+				Id("sl").Id("[]*"+typeName),
+				Id("el").Id("*"+typeName),
+			).
+			Params(
+				Bool(),
+				Error(),
+			),
+
+		Id("GetUnion").
+			Params(
+				Id("sl1, sl2").Index().Id("*"+typeName),
+			).
+			Params(
+				Index().Id("*"+typeName),
+				Error(),
+			),
+
+		Id("InFirstOnly").
+			Params(
+				Id("sl1, sl2").Index().Id("*"+typeName),
+			).
+			Params(
+				Index().Id("*"+typeName),
+				Error(),
+			),
+	)
+
+	f.Func().
+		Id(typeName + "Slice").
+		Params().
+		Id(getInterfaceName(typeName)).
+		Block(
+			Return().Op("&").Id(getStructName(typeName)).Block(),
 		)
 }
