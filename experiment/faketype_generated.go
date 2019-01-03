@@ -62,13 +62,6 @@ func (r *fakeType_struct) sliceToEqualers(sl []*FakeType) []lib.Equaler {
 	}
 	return equalerSl
 }
-func (r *fakeType_struct) sliceToInterfacesSlice(sl []*FakeType) []interface{} {
-	equalerSl := make([]interface{}, len(sl))
-	for i := range sl {
-		equalerSl[i] = sl[i]
-	}
-	return equalerSl
-}
 func (r *fakeType_struct) Contains(sl []*FakeType, el *FakeType) (bool, error) {
 	equalerSl := r.sliceToEqualers(sl)
 	return lib.Contains(equalerSl, el)

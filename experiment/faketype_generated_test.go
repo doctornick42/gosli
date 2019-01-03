@@ -261,6 +261,242 @@ func (ts *FakeTypeTestSuite) TestFakeTypeSelect() {
 	}
 }
 
+func (ts *FakeTypeTestSuite) TestFakeTypeContains() {
+	sl := []*FakeType{
+		&FakeType{
+			A: 1,
+			B: "one",
+		},
+		&FakeType{
+			A: 2,
+			B: "two",
+		},
+		&FakeType{
+			A: 3,
+			B: "three",
+		},
+	}
+
+	testCases := []struct {
+		name        string
+		sl          []*FakeType
+		el          *FakeType
+		expectedRes bool
+		expectedErr error
+	}{
+		{
+			name: "contains",
+			sl:   sl,
+			el: &FakeType{
+				A: 2,
+				B: "two",
+			},
+			expectedRes: true,
+		},
+		{
+			name: "doesn't contain",
+			sl:   sl,
+			el: &FakeType{
+				A: 7000,
+				B: "seven thousands",
+			},
+			expectedRes: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		ts.initDependencies()
+
+		ts.T().Run(tc.name, func(t *testing.T) {
+			res, err := FakeTypeSlice().Contains(tc.sl, tc.el)
+
+			if tc.expectedErr == nil {
+				assert.Equal(t, tc.expectedRes, res)
+			} else {
+				assert.NotNil(t, err)
+				assert.Equal(t, tc.expectedErr.Error(), err.Error())
+			}
+		})
+	}
+}
+
+func (ts *FakeTypeTestSuite) TestFakeTypeGetUnion() {
+	sl := []*FakeType{
+		&FakeType{
+			A: 1,
+			B: "one",
+		},
+		&FakeType{
+			A: 2,
+			B: "two",
+		},
+		&FakeType{
+			A: 3,
+			B: "three",
+		},
+	}
+
+	testCases := []struct {
+		name        string
+		sl1         []*FakeType
+		sl2         []*FakeType
+		expectedRes []*FakeType
+		expectedErr error
+	}{
+		{
+			name: "union exists",
+			sl1:  sl,
+			sl2: []*FakeType{
+				&FakeType{
+					A: 2,
+					B: "two",
+				},
+				&FakeType{
+					A: 3,
+					B: "three",
+				},
+				&FakeType{
+					A: 4,
+					B: "four",
+				},
+			},
+			expectedRes: []*FakeType{
+				&FakeType{
+					A: 2,
+					B: "two",
+				},
+				&FakeType{
+					A: 3,
+					B: "three",
+				},
+			},
+		},
+		{
+			name: "no union",
+			sl1:  sl,
+			sl2: []*FakeType{
+				&FakeType{
+					A: 5,
+					B: "five",
+				},
+				&FakeType{
+					A: 4,
+					B: "four",
+				},
+			},
+			expectedRes: []*FakeType{},
+		},
+	}
+
+	for _, tc := range testCases {
+		ts.initDependencies()
+
+		ts.T().Run(tc.name, func(t *testing.T) {
+			res, err := FakeTypeSlice().GetUnion(tc.sl1, tc.sl2)
+
+			if tc.expectedErr == nil {
+				assert.EqualValues(t, tc.expectedRes, res)
+			} else {
+				assert.NotNil(t, err)
+				assert.Equal(t, tc.expectedErr.Error(), err.Error())
+			}
+		})
+	}
+}
+
+func (ts *FakeTypeTestSuite) TestFakeTypeInFirstOnly() {
+	sl := []*FakeType{
+		&FakeType{
+			A: 1,
+			B: "one",
+		},
+		&FakeType{
+			A: 2,
+			B: "two",
+		},
+		&FakeType{
+			A: 3,
+			B: "three",
+		},
+	}
+
+	testCases := []struct {
+		name        string
+		sl1         []*FakeType
+		sl2         []*FakeType
+		expectedRes []*FakeType
+		expectedErr error
+	}{
+		{
+			name: "union exists",
+			sl1:  sl,
+			sl2: []*FakeType{
+				&FakeType{
+					A: 2,
+					B: "two",
+				},
+				&FakeType{
+					A: 3,
+					B: "three",
+				},
+				&FakeType{
+					A: 4,
+					B: "four",
+				},
+			},
+			expectedRes: []*FakeType{
+				&FakeType{
+					A: 1,
+					B: "one",
+				},
+			},
+		},
+		{
+			name: "no union",
+			sl1:  sl,
+			sl2: []*FakeType{
+				&FakeType{
+					A: 5,
+					B: "five",
+				},
+				&FakeType{
+					A: 4,
+					B: "four",
+				},
+			},
+			expectedRes: []*FakeType{
+				&FakeType{
+					A: 1,
+					B: "one",
+				},
+				&FakeType{
+					A: 2,
+					B: "two",
+				},
+				&FakeType{
+					A: 3,
+					B: "three",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		ts.initDependencies()
+
+		ts.T().Run(tc.name, func(t *testing.T) {
+			res, err := FakeTypeSlice().InFirstOnly(tc.sl1, tc.sl2)
+
+			if tc.expectedErr == nil {
+				assert.EqualValues(t, tc.expectedRes, res)
+			} else {
+				assert.NotNil(t, err)
+				assert.Equal(t, tc.expectedErr.Error(), err.Error())
+			}
+		})
+	}
+}
+
 func (ts *FakeTypeTestSuite) initDependencies() {
 	ts.mockCtrl = gomock.NewController(ts.T())
 }
