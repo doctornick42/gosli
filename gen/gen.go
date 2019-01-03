@@ -474,10 +474,17 @@ func generateInfrastructure(f *File, typeName string) {
 	)
 
 	f.Func().
-		Id(typeName + "Slice").
+		Id(typeName+"Slice").
 		Params().
 		Id(getInterfaceName(typeName)).
 		Block(
-			Return().Op("&").Id(getStructName(typeName)).Block(),
+			If(
+				Id(getVarName(typeName)).Op("==").Nil(),
+			).Block(
+				Id(getVarName(typeName)).Op("=").
+					Op("&").Id(getStructName(typeName)).Block(),
+			),
+
+			Return().Id(getVarName(typeName)),
 		)
 }

@@ -19,7 +19,10 @@ type fakeType_interface interface {
 }
 
 func FakeTypeSlice() fakeType_interface {
-	return &fakeType_struct{}
+	if fakeType_var == nil {
+		fakeType_var = &fakeType_struct{}
+	}
+	return fakeType_var
 }
 func (r *fakeType_struct) FirstOrDefault(sl []*FakeType, f func(*FakeType) bool) *FakeType {
 	for _, slEl := range sl {
