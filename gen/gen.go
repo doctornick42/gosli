@@ -67,10 +67,18 @@ func getModuleName(originFilePath string) (string, error) {
 		return "", err
 	}
 	defer f.Close()
-	r := bufio.NewReader(f)
-	firstLine, err := r.ReadString('\n')
-	if err != nil {
-		return "", err
+
+	firstLine := ""
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		if strings.HasPrefix(sc.Text(), "package") {
+			firstLine = sc.Text()
+			break
+		}
+	}
+
+	if len(firstLine) == 0 {
+		return "", errors.New("Package name not found in the specified file")
 	}
 
 	firstLineSplitted := strings.Split(firstLine, " ")

@@ -1,3 +1,6 @@
+//So, here's our structures
+//for a little experiment
+
 package experiment
 
 type FakeType struct {

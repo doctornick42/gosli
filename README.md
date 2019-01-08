@@ -366,4 +366,4 @@ Let's look on the methods list.
     //} 
     ```
 
-#### If the description looks unclear for you, please take a look at [`experiment` folder](../tree/master/experiment). You can find there unit test, benchmarks and some generated code that could describe the essent of the library much better tham my poor English :)
+#### If the description looks unclear for you, please take a look at [`experiment` folder](../tree/master/experiment). You can find there unit test, benchmarks and some generated code that could describe the essent of the library much better than my poor English :)
