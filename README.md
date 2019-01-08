@@ -211,6 +211,40 @@ Let's look on the methods list.
 	//} 
     ```
 
+* ### Page
+    Returns paginated slice according to given `number` (number of selected page) and `perPage` 
+    (items per a page). `number` parameter should start with 1 (not 0).
+    
+    ```go
+    sl := []*FakeType{
+	    &FakeType{
+            A: 1,
+            B: "one",
+	    },
+        &FakeType{
+            A: 2,
+            B: "two",
+        },
+        &FakeType{
+            A: 3,
+            B: "three",
+        },
+    }
+    
+    res, err := FakeTypeSlice().PerPage(sl, 1, 2)
+
+    //res = []*FakeType
+    //    &FakeType{
+    //        A: 1,
+    //        B: "one",
+	//    },
+    //    &FakeType{
+    //        A: 2,
+    //        B: "two",
+    //    },
+	//} 
+    ```
+
 * ### Contains
     Returns `true` if a slice contains at least one item that is equal to the desired one.
     

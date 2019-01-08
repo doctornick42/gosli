@@ -261,6 +261,229 @@ func (ts *FakeTypeTestSuite) TestFakeTypeSelect() {
 	}
 }
 
+func (ts *FakeTypeTestSuite) TestFakeTypePage() {
+	sl := []*FakeType{
+		&FakeType{
+			A: 1,
+			B: "one",
+		},
+		&FakeType{
+			A: 2,
+			B: "two",
+		},
+		&FakeType{
+			A: 3,
+			B: "three",
+		},
+		&FakeType{
+			A: 4,
+			B: "four",
+		},
+		&FakeType{
+			A: 5,
+			B: "five",
+		},
+		&FakeType{
+			A: 6,
+			B: "six",
+		},
+		&FakeType{
+			A: 7,
+			B: "seven",
+		},
+		&FakeType{
+			A: 8,
+			B: "eight",
+		},
+		&FakeType{
+			A: 9,
+			B: "nine",
+		},
+		&FakeType{
+			A: 10,
+			B: "ten",
+		},
+	}
+
+	testCases := []struct {
+		name        string
+		sl          []*FakeType
+		pageNumber  int64
+		perPage     int64
+		expectedRes []*FakeType
+		expectedErr error
+	}{
+		{
+			name:       "10 items, per page - 5, page 1",
+			sl:         sl,
+			pageNumber: 1,
+			perPage:    5,
+			expectedRes: []*FakeType{
+				&FakeType{
+					A: 1,
+					B: "one",
+				},
+				&FakeType{
+					A: 2,
+					B: "two",
+				},
+				&FakeType{
+					A: 3,
+					B: "three",
+				},
+				&FakeType{
+					A: 4,
+					B: "four",
+				},
+				&FakeType{
+					A: 5,
+					B: "five",
+				},
+			},
+		},
+		{
+			name:       "10 items, per page - 5, page 2",
+			sl:         sl,
+			pageNumber: 2,
+			perPage:    5,
+			expectedRes: []*FakeType{
+				&FakeType{
+					A: 6,
+					B: "six",
+				},
+				&FakeType{
+					A: 7,
+					B: "seven",
+				},
+				&FakeType{
+					A: 8,
+					B: "eight",
+				},
+				&FakeType{
+					A: 9,
+					B: "nine",
+				},
+				&FakeType{
+					A: 10,
+					B: "ten",
+				},
+			},
+		},
+		{
+			name:        "10 items, per page - 5, page 3",
+			sl:          sl,
+			pageNumber:  3,
+			perPage:     5,
+			expectedRes: []*FakeType{},
+		},
+		{
+			name:       "10 items, per page - 7, page 2",
+			sl:         sl,
+			pageNumber: 2,
+			perPage:    7,
+			expectedRes: []*FakeType{
+				&FakeType{
+					A: 8,
+					B: "eight",
+				},
+				&FakeType{
+					A: 9,
+					B: "nine",
+				},
+				&FakeType{
+					A: 10,
+					B: "ten",
+				},
+			},
+		},
+		{
+			name:       "10 items, per page - 12, page 1",
+			sl:         sl,
+			pageNumber: 1,
+			perPage:    12,
+			expectedRes: []*FakeType{
+				&FakeType{
+					A: 1,
+					B: "one",
+				},
+				&FakeType{
+					A: 2,
+					B: "two",
+				},
+				&FakeType{
+					A: 3,
+					B: "three",
+				},
+				&FakeType{
+					A: 4,
+					B: "four",
+				},
+				&FakeType{
+					A: 5,
+					B: "five",
+				},
+				&FakeType{
+					A: 6,
+					B: "six",
+				},
+				&FakeType{
+					A: 7,
+					B: "seven",
+				},
+				&FakeType{
+					A: 8,
+					B: "eight",
+				},
+				&FakeType{
+					A: 9,
+					B: "nine",
+				},
+				&FakeType{
+					A: 10,
+					B: "ten",
+				},
+			},
+		},
+		{
+			name:        "10 items, per page - 5, page 0",
+			sl:          sl,
+			pageNumber:  0,
+			perPage:     5,
+			expectedErr: errors.New("Page number should start with 1"),
+		},
+		{
+			name:        "10 items, per page - 5, page -1",
+			sl:          sl,
+			pageNumber:  -1,
+			perPage:     5,
+			expectedErr: errors.New("Page number should start with 1"),
+		},
+		{
+			name:        "10 items, per page - 0, page 1",
+			sl:          sl,
+			pageNumber:  1,
+			perPage:     0,
+			expectedRes: []*FakeType{},
+		},
+	}
+
+	for _, tc := range testCases {
+		ts.initDependencies()
+
+		ts.T().Run(tc.name, func(t *testing.T) {
+			res, err := FakeTypeSlice().Page(tc.sl, tc.pageNumber, tc.perPage)
+
+			if tc.expectedErr == nil {
+				assert.Nil(t, err)
+				assert.EqualValues(t, tc.expectedRes, res)
+			} else {
+				assert.NotNil(t, err)
+				assert.Equal(t, tc.expectedErr.Error(), err.Error())
+			}
+		})
+	}
+}
+
 func (ts *FakeTypeTestSuite) TestFakeTypeContains() {
 	sl := []*FakeType{
 		&FakeType{

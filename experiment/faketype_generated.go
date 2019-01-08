@@ -13,6 +13,7 @@ type fakeType_interface interface {
 	FirstOrDefault(sl []*FakeType, f func(*FakeType) bool) *FakeType
 	First(sl []*FakeType, f func(*FakeType) bool) (*FakeType, error)
 	Select(sl []*FakeType, f func(*FakeType) interface{}) []interface{}
+	Page(sl []*FakeType, number int64, perPage int64) ([]*FakeType, error)
 	Contains(sl []*FakeType, el *FakeType) (bool, error)
 	GetUnion(sl1, sl2 []*FakeType) ([]*FakeType, error)
 	InFirstOnly(sl1, sl2 []*FakeType) ([]*FakeType, error)
@@ -54,6 +55,21 @@ func (r *fakeType_struct) Select(sl []*FakeType, f func(*FakeType) interface{}) 
 		res[i] = f(sl[i])
 	}
 	return res
+}
+func (r *fakeType_struct) Page(sl []*FakeType, number int64, perPage int64) ([]*FakeType, error) {
+	if number <= 0 {
+		return nil, errors.New("Page number should start with 1")
+	}
+	number--
+	first := number * perPage
+	if first > int64(len(sl)) {
+		return []*FakeType{}, nil
+	}
+	last := first + perPage
+	if last > int64(len(sl)) {
+		last = int64(len(sl))
+	}
+	return sl[first:last], nil
 }
 func (r *fakeType_struct) sliceToEqualers(sl []*FakeType) []lib.Equaler {
 	equalerSl := make([]lib.Equaler, len(sl))

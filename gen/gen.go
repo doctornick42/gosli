@@ -33,6 +33,7 @@ func Run(args []string) error {
 	generateFirst(f, typeName)
 	generateWhere(f, typeName)
 	generateSelect(f, typeName)
+	generatePage(f, typeName)
 	generateSliceToEqualers(f, typeName)
 	generateContains(f, typeName)
 	generateProcessSliceOperation(f, typeName)
@@ -188,6 +189,75 @@ func generateSelect(f *File, typeName string) {
 				),
 			),
 			Return(Id("res")),
+		)
+}
+
+/*
+func Page(sl []int64, number, perPage int64) ([]int64, error) {
+	if number <= 0 {
+		return nil, errors.New("Page number should start with 1")
+	}
+
+	number--
+
+	first := number * perPage
+
+	if first > int64(len(sl)) {
+		return []int64{}, nil
+	}
+
+	last := first + perPage
+	if last > int64(len(sl)) {
+		last = int64(len(sl))
+	}
+
+	return sl[first:last], nil
+}
+*/
+
+func generatePage(f *File, typeName string) {
+	f.Func().
+		Params(
+			Id("r").Id("*"+getStructName(typeName)),
+		).
+		Id("Page").
+		Params(
+			Id("sl").Id("[]*"+typeName),
+			Id("number").Int64(),
+			Id("perPage").Int64(),
+		).
+		Params(
+			Id("[]*"+typeName),
+			Error(),
+		).
+		Block(
+			If(
+				Id("number").Op("<=").Lit(0),
+			).Block(
+				Return(Nil(), Qual("errors", "New").Params(Lit("Page number should start with 1"))),
+			),
+
+			Id("number").Op("--"),
+
+			Id("first").Op(":=").Id("number").Op("*").Id("perPage"),
+
+			If(
+				Id("first").Op(">").Int64().Params(Len(Id("sl"))),
+			).Block(
+				Return(
+					Index().Id("*"+typeName).Block(), Nil(),
+				),
+			),
+
+			Id("last").Op(":=").Id("first").Op("+").Id("perPage"),
+
+			If(
+				Id("last").Op(">").Int64().Params(Len(Id("sl"))),
+			).Block(
+				Id("last").Op("=").Int64().Params(Len(Id("sl"))),
+			),
+
+			Return(Id("sl").Index(Id("first").Op(":").Id("last")), Nil()),
 		)
 }
 
@@ -419,6 +489,17 @@ func generateInfrastructure(f *File, typeName string) {
 				Id("f").Id(fmt.Sprintf("func(*%s) interface{}", typeName)),
 			).
 			Id("[]interface{}"),
+
+		Id("Page").
+			Params(
+				Id("sl").Id("[]*"+typeName),
+				Id("number").Int64(),
+				Id("perPage").Int64(),
+			).
+			Params(
+				Id("[]*"+typeName),
+				Error(),
+			),
 
 		Id("Contains").
 			Params(
