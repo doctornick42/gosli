@@ -366,4 +366,4 @@ Let's look on the methods list.
     //} 
     ```
 
-#### If the description looks unclear for you, please take a look at [`experiment` folder](../tree/master/experiment). You can find there unit test, benchmarks and some generated code that could describe the essent of the library much better than my poor English :)
+#### If the description looks unclear for you, please take a look at [`experiment` folder](https://github.com/doctornick42/gosli/tree/master/experiment). You can find there unit test, benchmarks and some generated code that could describe the essent of the library much better than my poor English :)
