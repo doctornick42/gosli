@@ -484,6 +484,56 @@ func (ts *FakeTypeTestSuite) TestFakeTypePage() {
 	}
 }
 
+func (ts *FakeTypeTestSuite) TestFakeTypeAny() {
+	sl := []*FakeType{
+		&FakeType{
+			A: 1,
+			B: "one",
+		},
+		&FakeType{
+			A: 2,
+			B: "two",
+		},
+		&FakeType{
+			A: 3,
+			B: "three",
+		},
+	}
+
+	testCases := []struct {
+		name        string
+		sl          []*FakeType
+		filter      func(*FakeType) bool
+		expectedRes bool
+	}{
+		{
+			name: "found",
+			sl:   sl,
+			filter: func(ft *FakeType) bool {
+				return ft.A == 2
+			},
+			expectedRes: true,
+		},
+		{
+			name: "not found",
+			sl:   sl,
+			filter: func(ft *FakeType) bool {
+				return ft.A == 123
+			},
+			expectedRes: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		ts.initDependencies()
+
+		ts.T().Run(tc.name, func(t *testing.T) {
+			res := FakeTypeSlice(tc.sl).Any(tc.filter)
+			assert.Equal(t, tc.expectedRes, res)
+		})
+	}
+}
+
 func (ts *FakeTypeTestSuite) TestFakeTypeContains() {
 	sl := []*FakeType{
 		&FakeType{

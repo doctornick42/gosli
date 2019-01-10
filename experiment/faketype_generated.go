@@ -53,6 +53,10 @@ func (r FakeTypeSlice) Page(number int64, perPage int64) ([]*FakeType, error) {
 	}
 	return r[first:last], nil
 }
+func (r FakeTypeSlice) Any(f func(*FakeType) bool) bool {
+	first := r.FirstOrDefault(f)
+	return first != nil
+}
 func (r FakeTypeSlice) sliceToEqualers() []lib.Equaler {
 	equalerSl := make([]lib.Equaler, len(r))
 	for i := range r {

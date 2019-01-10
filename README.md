@@ -245,6 +245,33 @@ Let's look on the methods list.
 	//} 
     ```
 
+* ### Any
+    Returns `true` if any item of the slice is passed through a filter.
+
+    ```go
+    sl := []*FakeType{
+	    &FakeType{
+            A: 1,
+            B: "one",
+	    },
+        &FakeType{
+            A: 2,
+            B: "two",
+        },
+        &FakeType{
+            A: 3,
+            B: "three",
+        },
+    }
+    
+    filter = func(t *FakeType) bool {
+        return t.A == 2
+    }
+    res, err := FakeTypeSlice(sl).Any(filter)
+
+    //res = true
+    ```
+
 * ### Contains
     Returns `true` if a slice contains at least one item that is equal to the desired one.
     

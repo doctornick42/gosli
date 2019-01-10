@@ -34,6 +34,7 @@ func Run(args []string) error {
 	generateWhere(f, typeName)
 	generateSelect(f, typeName)
 	generatePage(f, typeName)
+	generateAny(f, typeName)
 	generateSliceToEqualers(f, typeName)
 	generateContains(f, typeName)
 	generateProcessSliceOperation(f, typeName)
@@ -238,6 +239,23 @@ func generatePage(f *File, typeName string) {
 			),
 
 			Return(Id("r").Index(Id("first").Op(":").Id("last")), Nil()),
+		)
+}
+
+func generateAny(f *File, typeName string) {
+	f.Func().
+		Params(
+			Id("r").Id(getStructName(typeName)),
+		).
+		Id("Any").
+		Params(
+			Id("f").Id("func(*"+typeName+") bool"),
+		).
+		Params(Bool()).
+		Block(
+			Id("first").Op(":=").Id("r.FirstOrDefault").Call(Id("f")),
+
+			Return(Id("first").Op("!=").Nil()),
 		)
 }
 
