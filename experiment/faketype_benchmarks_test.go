@@ -132,6 +132,45 @@ func BenchmarkWhere(b *testing.B) {
 	}
 }
 
+func BenchmarkPage(b *testing.B) {
+	sl := []*FakeType{
+		&FakeType{
+			A: 1,
+			B: "one",
+		},
+		&FakeType{
+			A: 2,
+			B: "two",
+		},
+		&FakeType{
+			A: 3,
+			B: "three",
+		},
+		&FakeType{
+			A: 4,
+			B: "four",
+		},
+		&FakeType{
+			A: 5,
+			B: "five",
+		},
+		&FakeType{
+			A: 6,
+			B: "six",
+		},
+	}
+
+	for n := 0; n < b.N; n++ {
+		var page int64 = 1
+
+		if n%2 == 0 {
+			page = 2
+		}
+
+		FakeTypeSlice(sl).Page(page, 3)
+	}
+}
+
 func BenchmarkContains(b *testing.B) {
 	sl := []*FakeType{
 		&FakeType{
