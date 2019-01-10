@@ -66,7 +66,7 @@ func (ts *FakeTypeTestSuite) TestFakeTypeFirstOrDefault() {
 		ts.initDependencies()
 
 		ts.T().Run(tc.name, func(t *testing.T) {
-			res := FakeTypeSlice().FirstOrDefault(tc.sl, tc.filter)
+			res := FakeTypeSlice(tc.sl).FirstOrDefault(tc.filter)
 
 			if tc.expectedRes == nil {
 				assert.Nil(t, res)
@@ -128,7 +128,7 @@ func (ts *FakeTypeTestSuite) TestFakeTypeFirst() {
 		ts.initDependencies()
 
 		ts.T().Run(tc.name, func(t *testing.T) {
-			res, err := FakeTypeSlice().First(tc.sl, tc.filter)
+			res, err := FakeTypeSlice(tc.sl).First(tc.filter)
 
 			if tc.expectedErr == nil {
 				isEqualToExpected, err := res.Equal(tc.expectedRes)
@@ -195,7 +195,7 @@ func (ts *FakeTypeTestSuite) TestFakeTypeWhere() {
 		ts.initDependencies()
 
 		ts.T().Run(tc.name, func(t *testing.T) {
-			res := FakeTypeSlice().Where(tc.sl, tc.filter)
+			res := FakeTypeSlice(tc.sl).Where(tc.filter)
 
 			assert.EqualValues(t, tc.expectedRes, res)
 		})
@@ -254,7 +254,7 @@ func (ts *FakeTypeTestSuite) TestFakeTypeSelect() {
 		ts.initDependencies()
 
 		ts.T().Run(tc.name, func(t *testing.T) {
-			res := FakeTypeSlice().Select(tc.sl, tc.filter)
+			res := FakeTypeSlice(tc.sl).Select(tc.filter)
 
 			assert.EqualValues(t, tc.expectedRes, res)
 		})
@@ -471,7 +471,7 @@ func (ts *FakeTypeTestSuite) TestFakeTypePage() {
 		ts.initDependencies()
 
 		ts.T().Run(tc.name, func(t *testing.T) {
-			res, err := FakeTypeSlice().Page(tc.sl, tc.pageNumber, tc.perPage)
+			res, err := FakeTypeSlice(tc.sl).Page(tc.pageNumber, tc.perPage)
 
 			if tc.expectedErr == nil {
 				assert.Nil(t, err)
@@ -531,7 +531,7 @@ func (ts *FakeTypeTestSuite) TestFakeTypeContains() {
 		ts.initDependencies()
 
 		ts.T().Run(tc.name, func(t *testing.T) {
-			res, err := FakeTypeSlice().Contains(tc.sl, tc.el)
+			res, err := FakeTypeSlice(tc.sl).Contains(tc.el)
 
 			if tc.expectedErr == nil {
 				assert.Equal(t, tc.expectedRes, res)
@@ -615,7 +615,7 @@ func (ts *FakeTypeTestSuite) TestFakeTypeGetUnion() {
 		ts.initDependencies()
 
 		ts.T().Run(tc.name, func(t *testing.T) {
-			res, err := FakeTypeSlice().GetUnion(tc.sl1, tc.sl2)
+			res, err := FakeTypeSlice(tc.sl1).GetUnion(tc.sl2)
 
 			if tc.expectedErr == nil {
 				assert.EqualValues(t, tc.expectedRes, res)
@@ -708,7 +708,7 @@ func (ts *FakeTypeTestSuite) TestFakeTypeInFirstOnly() {
 		ts.initDependencies()
 
 		ts.T().Run(tc.name, func(t *testing.T) {
-			res, err := FakeTypeSlice().InFirstOnly(tc.sl1, tc.sl2)
+			res, err := FakeTypeSlice(tc.sl1).InFirstOnly(tc.sl2)
 
 			if tc.expectedErr == nil {
 				assert.EqualValues(t, tc.expectedRes, res)

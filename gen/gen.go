@@ -105,17 +105,16 @@ func generateFileName(originFilePath, suffix, typeName string) string {
 func generateFirstOrDefault(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id("*"+getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("FirstOrDefault").
 		Params(
-			Id("sl").Id("[]*"+typeName),
 			Id("f").Id("func(*"+typeName+") bool"),
 		).
 		Id("*"+typeName).
 		Block(
 			For(
-				Id("_, slEl").Op(":=").Range().Id("sl").Block(
+				Id("_, slEl").Op(":=").Range().Id("r").Block(
 					If(
 						Id("f").Call(Id("slEl")),
 					).Block(
@@ -130,16 +129,15 @@ func generateFirstOrDefault(f *File, typeName string) {
 func generateFirst(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id("*"+getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("First").
 		Params(
-			Id("sl").Id("[]*"+typeName),
 			Id("f").Id("func(*"+typeName+") bool"),
 		).
 		Params(Id("*"+typeName), Error()).
 		Block(
-			Id("first").Op(":=").Id("r.FirstOrDefault").Call(Id("sl"), Id("f")),
+			Id("first").Op(":=").Id("r.FirstOrDefault").Call(Id("f")),
 			If(
 				Id("first").Op("==").Nil(),
 			).Block(
@@ -152,11 +150,10 @@ func generateFirst(f *File, typeName string) {
 func generateWhere(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id("*"+getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("Where").
 		Params(
-			Id("sl").Id("[]*"+typeName),
 			Id("f").Id("func(*"+typeName+") bool"),
 		).
 		Id("[]*"+typeName).
@@ -164,7 +161,7 @@ func generateWhere(f *File, typeName string) {
 			Id("res").Op(":=").Make(Id("[]*"+typeName), Lit(0)),
 
 			For(
-				Id("_, slEl").Op(":=").Range().Id("sl").Block(
+				Id("_, slEl").Op(":=").Range().Id("r").Block(
 					If(
 						Id("f").Call(Id("slEl")),
 					).Block(
@@ -179,58 +176,33 @@ func generateWhere(f *File, typeName string) {
 func generateSelect(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id("*"+getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("Select").
 		Params(
-			Id("sl").Id("[]*"+typeName),
 			Id("f").Id(fmt.Sprintf("func(*%s) interface{}", typeName)),
 		).
 		Id("[]interface{}").
 		Block(
-			Id("res").Op(":=").Make(Id("[]interface{}"), Len(Id("sl"))),
+			Id("res").Op(":=").Make(Id("[]interface{}"), Len(Id("r"))),
 
 			For(
-				Id("i").Op(":=").Range().Id("sl").Block(
+				Id("i").Op(":=").Range().Id("r").Block(
 					Id("res").Index(Id("i")).Op("=").
-						Id("f").Call(Id("sl").Index(Id("i"))),
+						Id("f").Call(Id("r").Index(Id("i"))),
 				),
 			),
 			Return(Id("res")),
 		)
 }
 
-/*
-func Page(sl []int64, number, perPage int64) ([]int64, error) {
-	if number <= 0 {
-		return nil, errors.New("Page number should start with 1")
-	}
-
-	number--
-
-	first := number * perPage
-
-	if first > int64(len(sl)) {
-		return []int64{}, nil
-	}
-
-	last := first + perPage
-	if last > int64(len(sl)) {
-		last = int64(len(sl))
-	}
-
-	return sl[first:last], nil
-}
-*/
-
 func generatePage(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id("*"+getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("Page").
 		Params(
-			Id("sl").Id("[]*"+typeName),
 			Id("number").Int64(),
 			Id("perPage").Int64(),
 		).
@@ -250,7 +222,7 @@ func generatePage(f *File, typeName string) {
 			Id("first").Op(":=").Id("number").Op("*").Id("perPage"),
 
 			If(
-				Id("first").Op(">").Int64().Params(Len(Id("sl"))),
+				Id("first").Op(">").Int64().Params(Len(Id("r"))),
 			).Block(
 				Return(
 					Index().Id("*"+typeName).Block(), Nil(),
@@ -260,12 +232,12 @@ func generatePage(f *File, typeName string) {
 			Id("last").Op(":=").Id("first").Op("+").Id("perPage"),
 
 			If(
-				Id("last").Op(">").Int64().Params(Len(Id("sl"))),
+				Id("last").Op(">").Int64().Params(Len(Id("r"))),
 			).Block(
-				Id("last").Op("=").Int64().Params(Len(Id("sl"))),
+				Id("last").Op("=").Int64().Params(Len(Id("r"))),
 			),
 
-			Return(Id("sl").Index(Id("first").Op(":").Id("last")), Nil()),
+			Return(Id("r").Index(Id("first").Op(":").Id("last")), Nil()),
 		)
 }
 
@@ -310,20 +282,18 @@ func generateEqualImplementation(f *File, typeName string) {
 func generateSliceToEqualers(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id("*"+getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("sliceToEqualers").
-		Params(
-			Id("sl").Id("[]*"+typeName),
-		).
+		Params().
 		Index().Qual("github.com/doctornick42/gosli/lib", "Equaler").
 		Block(
-			Id("equalerSl").Op(":=").Make(Id("[]lib.Equaler"), Len(Id("sl"))),
+			Id("equalerSl").Op(":=").Make(Id("[]lib.Equaler"), Len(Id("r"))),
 
 			For(
-				Id("i").Op(":=").Range().Id("sl"),
+				Id("i").Op(":=").Range().Id("r"),
 			).Block(
-				Id("equalerSl[i]").Op("=").Id("sl[i]"),
+				Id("equalerSl[i]").Op("=").Id("r[i]"),
 			),
 
 			Return(Id("equalerSl")),
@@ -333,11 +303,10 @@ func generateSliceToEqualers(f *File, typeName string) {
 func generateContains(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id("*"+getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("Contains").
 		Params(
-			Id("sl").Id("[]*"+typeName),
 			Id("el").Id("*"+typeName),
 		).
 		Params(
@@ -345,7 +314,7 @@ func generateContains(f *File, typeName string) {
 			Error(),
 		).
 		Block(
-			Id("equalerSl").Op(":=").Id("r.sliceToEqualers").Call(Id("sl")),
+			Id("equalerSl").Op(":=").Id("r.sliceToEqualers").Call(),
 			Return(
 				Qual("github.com/doctornick42/gosli/lib", "Contains").
 					Call(Id("equalerSl"), Id("el")),
@@ -356,11 +325,11 @@ func generateContains(f *File, typeName string) {
 func generateProcessSliceOperation(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id("*"+getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("processSliceOperation").
 		Params(
-			Id("sl1, sl2").Id("[]*"+typeName),
+			Id("sl2").Id(getStructName(typeName)),
 			Id("f").Func().Params(
 				Index().Qual("github.com/doctornick42/gosli/lib", "Equaler"),
 				Index().Qual("github.com/doctornick42/gosli/lib", "Equaler"),
@@ -374,8 +343,8 @@ func generateProcessSliceOperation(f *File, typeName string) {
 			Error(),
 		).
 		Block(
-			Id("equalerSl1").Op(":=").Id("r.sliceToEqualers").Call(Id("sl1")),
-			Id("equalerSl2").Op(":=").Id("r.sliceToEqualers").Call(Id("sl2")),
+			Id("equalerSl1").Op(":=").Id("r.sliceToEqualers").Call(),
+			Id("equalerSl2").Op(":=").Id("sl2.sliceToEqualers").Call(),
 			Id("untypedRes, err").Op(":=").Id("f").Call(Id("equalerSl1"), Id("equalerSl2")),
 
 			If(
@@ -399,11 +368,11 @@ func generateProcessSliceOperation(f *File, typeName string) {
 func generateGetUnion(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id("*"+getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("GetUnion").
 		Params(
-			Id("sl1, sl2").Index().Id("*"+typeName),
+			Id("sl2").Index().Id("*"+typeName),
 		).
 		Params(
 			Index().Id("*"+typeName),
@@ -412,7 +381,7 @@ func generateGetUnion(f *File, typeName string) {
 		Block(
 			Return(
 				Id("r.processSliceOperation").Call(
-					Id("sl1, sl2"),
+					Id("sl2"),
 					Qual("github.com/doctornick42/gosli/lib", "GetUnion"),
 				),
 			),
@@ -422,11 +391,11 @@ func generateGetUnion(f *File, typeName string) {
 func generateInFirstOnly(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id("*"+getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("InFirstOnly").
 		Params(
-			Id("sl1, sl2").Index().Id("*"+typeName),
+			Id("sl2").Index().Id("*"+typeName),
 		).
 		Params(
 			Index().Id("*"+typeName),
@@ -435,7 +404,7 @@ func generateInFirstOnly(f *File, typeName string) {
 		Block(
 			Return(
 				Id("r.processSliceOperation").Call(
-					Id("sl1, sl2"),
+					Id("sl2"),
 					Qual("github.com/doctornick42/gosli/lib", "InFirstOnly"),
 				),
 			),
@@ -449,107 +418,11 @@ func firstRuneToLower(origin string) string {
 }
 
 func getStructName(typeName string) string {
-	return firstRuneToLower(typeName) + "_struct"
-}
-
-func getVarName(typeName string) string {
-	return firstRuneToLower(typeName) + "_var"
-}
-
-func getInterfaceName(typeName string) string {
-	return firstRuneToLower(typeName) + "_interface"
+	return typeName + "Slice"
 }
 
 func generateInfrastructure(f *File, typeName string) {
 	structName := getStructName(typeName)
-	varName := getVarName(typeName)
-	interfaceName := getInterfaceName(typeName)
 
-	f.Var().Id(varName).Id(interfaceName)
-
-	f.Type().Id(structName).Struct()
-
-	f.Type().Id(interfaceName).Interface(
-		Id("Where").
-			Params(
-				Id("sl").Id("[]*"+typeName),
-				Id("f").Id("func(*"+typeName+") bool"),
-			).
-			Id("[]*"+typeName),
-
-		Id("FirstOrDefault").
-			Params(
-				Id("sl").Id("[]*"+typeName),
-				Id("f").Id("func(*"+typeName+") bool"),
-			).
-			Id("*"+typeName),
-
-		Id("First").
-			Params(
-				Id("sl").Id("[]*"+typeName),
-				Id("f").Id("func(*"+typeName+") bool"),
-			).
-			Params(Id("*"+typeName), Error()),
-
-		Id("Select").
-			Params(
-				Id("sl").Id("[]*"+typeName),
-				Id("f").Id(fmt.Sprintf("func(*%s) interface{}", typeName)),
-			).
-			Id("[]interface{}"),
-
-		Id("Page").
-			Params(
-				Id("sl").Id("[]*"+typeName),
-				Id("number").Int64(),
-				Id("perPage").Int64(),
-			).
-			Params(
-				Id("[]*"+typeName),
-				Error(),
-			),
-
-		Id("Contains").
-			Params(
-				Id("sl").Id("[]*"+typeName),
-				Id("el").Id("*"+typeName),
-			).
-			Params(
-				Bool(),
-				Error(),
-			),
-
-		Id("GetUnion").
-			Params(
-				Id("sl1, sl2").Index().Id("*"+typeName),
-			).
-			Params(
-				Index().Id("*"+typeName),
-				Error(),
-			),
-
-		Id("InFirstOnly").
-			Params(
-				Id("sl1, sl2").Index().Id("*"+typeName),
-			).
-			Params(
-				Index().Id("*"+typeName),
-				Error(),
-			),
-	)
-
-	f.Func().
-		Id(typeName+"Slice").
-		Params().
-		Id(getInterfaceName(typeName)).
-		Block(
-			If(
-				Id(getVarName(typeName)).Op("==").Nil(),
-			).Block(
-				Id(getVarName(typeName)).Op("=").
-					Op("&").Id(getStructName(typeName)).Block(),
-			),
-
-			Return().Id(getVarName(typeName)),
-		)
+	f.Type().Id(structName).Index().Id("*" + typeName)
 }

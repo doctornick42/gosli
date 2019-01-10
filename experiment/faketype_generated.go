@@ -5,86 +5,68 @@ import (
 	lib "github.com/doctornick42/gosli/lib"
 )
 
-var fakeType_var fakeType_interface
+type FakeTypeSlice []*FakeType
 
-type fakeType_struct struct{}
-type fakeType_interface interface {
-	Where(sl []*FakeType, f func(*FakeType) bool) []*FakeType
-	FirstOrDefault(sl []*FakeType, f func(*FakeType) bool) *FakeType
-	First(sl []*FakeType, f func(*FakeType) bool) (*FakeType, error)
-	Select(sl []*FakeType, f func(*FakeType) interface{}) []interface{}
-	Page(sl []*FakeType, number int64, perPage int64) ([]*FakeType, error)
-	Contains(sl []*FakeType, el *FakeType) (bool, error)
-	GetUnion(sl1, sl2 []*FakeType) ([]*FakeType, error)
-	InFirstOnly(sl1, sl2 []*FakeType) ([]*FakeType, error)
-}
-
-func FakeTypeSlice() fakeType_interface {
-	if fakeType_var == nil {
-		fakeType_var = &fakeType_struct{}
-	}
-	return fakeType_var
-}
-func (r *fakeType_struct) FirstOrDefault(sl []*FakeType, f func(*FakeType) bool) *FakeType {
-	for _, slEl := range sl {
+func (r FakeTypeSlice) FirstOrDefault(f func(*FakeType) bool) *FakeType {
+	for _, slEl := range r {
 		if f(slEl) {
 			return slEl
 		}
 	}
 	return nil
 }
-func (r *fakeType_struct) First(sl []*FakeType, f func(*FakeType) bool) (*FakeType, error) {
-	first := r.FirstOrDefault(sl, f)
+func (r FakeTypeSlice) First(f func(*FakeType) bool) (*FakeType, error) {
+	first := r.FirstOrDefault(f)
 	if first == nil {
 		return nil, errors.New("Not found")
 	}
 	return first, nil
 }
-func (r *fakeType_struct) Where(sl []*FakeType, f func(*FakeType) bool) []*FakeType {
+func (r FakeTypeSlice) Where(f func(*FakeType) bool) []*FakeType {
 	res := make([]*FakeType, 0)
-	for _, slEl := range sl {
+	for _, slEl := range r {
 		if f(slEl) {
 			res = append(res, slEl)
 		}
 	}
 	return res
 }
-func (r *fakeType_struct) Select(sl []*FakeType, f func(*FakeType) interface{}) []interface{} {
-	res := make([]interface{}, len(sl))
-	for i := range sl {
-		res[i] = f(sl[i])
+func (r FakeTypeSlice) Select(f func(*FakeType) interface{}) []interface{} {
+	res := make([]interface{}, len(r))
+	for i := range r {
+		res[i] = f(r[i])
 	}
 	return res
 }
-func (r *fakeType_struct) Page(sl []*FakeType, number int64, perPage int64) ([]*FakeType, error) {
+func (r FakeTypeSlice) Page(number int64, perPage int64) ([]*FakeType, error) {
 	if number <= 0 {
 		return nil, errors.New("Page number should start with 1")
 	}
 	number--
 	first := number * perPage
-	if first > int64(len(sl)) {
+	if first > int64(len(r)) {
 		return []*FakeType{}, nil
 	}
 	last := first + perPage
-	if last > int64(len(sl)) {
-		last = int64(len(sl))
+	if last > int64(len(r)) {
+		last = int64(len(r))
 	}
-	return sl[first:last], nil
+	return r[first:last], nil
 }
-func (r *fakeType_struct) sliceToEqualers(sl []*FakeType) []lib.Equaler {
-	equalerSl := make([]lib.Equaler, len(sl))
-	for i := range sl {
-		equalerSl[i] = sl[i]
+func (r FakeTypeSlice) sliceToEqualers() []lib.Equaler {
+	equalerSl := make([]lib.Equaler, len(r))
+	for i := range r {
+		equalerSl[i] = r[i]
 	}
 	return equalerSl
 }
-func (r *fakeType_struct) Contains(sl []*FakeType, el *FakeType) (bool, error) {
-	equalerSl := r.sliceToEqualers(sl)
+func (r FakeTypeSlice) Contains(el *FakeType) (bool, error) {
+	equalerSl := r.sliceToEqualers()
 	return lib.Contains(equalerSl, el)
 }
-func (r *fakeType_struct) processSliceOperation(sl1, sl2 []*FakeType, f func([]lib.Equaler, []lib.Equaler) ([]lib.Equaler, error)) ([]*FakeType, error) {
-	equalerSl1 := r.sliceToEqualers(sl1)
-	equalerSl2 := r.sliceToEqualers(sl2)
+func (r FakeTypeSlice) processSliceOperation(sl2 FakeTypeSlice, f func([]lib.Equaler, []lib.Equaler) ([]lib.Equaler, error)) ([]*FakeType, error) {
+	equalerSl1 := r.sliceToEqualers()
+	equalerSl2 := sl2.sliceToEqualers()
 	untypedRes, err := f(equalerSl1, equalerSl2)
 	if err != nil {
 		return nil, err
@@ -95,11 +77,11 @@ func (r *fakeType_struct) processSliceOperation(sl1, sl2 []*FakeType, f func([]l
 	}
 	return res, nil
 }
-func (r *fakeType_struct) GetUnion(sl1, sl2 []*FakeType) ([]*FakeType, error) {
-	return r.processSliceOperation(sl1, sl2, lib.GetUnion)
+func (r FakeTypeSlice) GetUnion(sl2 []*FakeType) ([]*FakeType, error) {
+	return r.processSliceOperation(sl2, lib.GetUnion)
 }
-func (r *fakeType_struct) InFirstOnly(sl1, sl2 []*FakeType) ([]*FakeType, error) {
-	return r.processSliceOperation(sl1, sl2, lib.InFirstOnly)
+func (r FakeTypeSlice) InFirstOnly(sl2 []*FakeType) ([]*FakeType, error) {
+	return r.processSliceOperation(sl2, lib.InFirstOnly)
 }
 func (r *FakeType) Equal(another lib.Equaler) (bool, error) {
 	anotherCasted, ok := another.(*FakeType)
