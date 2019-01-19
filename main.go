@@ -8,7 +8,8 @@ import (
 )
 
 func main() {
-	err := gen.Run(os.Args[1:])
+	customGenerator := &gen.CustomGenerator{}
+	err := customGenerator.Run(os.Args[1:])
 
 	if err != nil {
 		log.Fatal(err)
