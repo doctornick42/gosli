@@ -24,7 +24,12 @@ func (g *PrimitivesGenerator) Run() error {
 
 		f := jen.NewFile(primitivesModuleName)
 		g.generateInfrastructure(f, typeName)
-		g.generateFirst(f, typeName)
+		generateFirstOrDefault(f, typeName)
+		generateFirst(f, typeName)
+		generateWhere(f, typeName)
+		generateSelect(f, typeName)
+		generatePage(f, typeName)
+		generateAny(f, typeName)
 
 		fakeOriginPath := fmt.Sprintf("%s/fake.go", primitivesModuleName)
 

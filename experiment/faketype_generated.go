@@ -13,7 +13,8 @@ func (r FakeTypePointerSlice) FirstOrDefault(f func(*FakeType) bool) *FakeType {
 			return slEl
 		}
 	}
-	return nil
+	var defVal *FakeType
+	return defVal
 }
 func (r FakeTypePointerSlice) First(f func(*FakeType) bool) (*FakeType, error) {
 	for _, slEl := range r {

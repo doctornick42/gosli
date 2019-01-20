@@ -103,7 +103,8 @@ func generateFirstOrDefault(f *File, typeName string) {
 					),
 				),
 			),
-			Return(Nil()),
+			Var().Id("defVal").Id(typeName),
+			Return(Id("defVal")),
 		)
 }
 
