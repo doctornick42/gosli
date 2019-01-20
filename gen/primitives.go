@@ -13,7 +13,31 @@ const (
 
 var (
 	AvailableTypes = []string{
+		"int",
 		"int8",
+		"int16",
+		"int32",
+		"int64",
+
+		"uint",
+		"uint8",
+		"uint16",
+		"uint32",
+		"uint64",
+		"uintptr",
+
+		"float32",
+		"float64",
+
+		"string",
+
+		"bool",
+
+		"byte",
+		"rune",
+
+		"complex64",
+		"complex128",
 	}
 )
 
@@ -22,7 +46,7 @@ type PrimitivesGenerator struct{}
 func (g *PrimitivesGenerator) Run() error {
 	for _, typeName := range AvailableTypes {
 
-		f := NewFile(primitivesModuleName)
+		f := NewFile("main")
 		g.generateInfrastructure(f, typeName)
 		generateFirstOrDefault(f, typeName)
 		generateFirst(f, typeName)
@@ -33,9 +57,8 @@ func (g *PrimitivesGenerator) Run() error {
 		g.generateContains(f, typeName)
 		g.generateGetUnion(f, typeName)
 		g.generateInFirstOnly(f, typeName)
-		// g.generateEqualImplementation(f, "*"+typeName)
 
-		fakeOriginPath := fmt.Sprintf("%s/fake.go", primitivesModuleName)
+		fakeOriginPath := fmt.Sprintf("fake.go")
 
 		genFileName := g.getGeneratedFileName(fakeOriginPath, typeName)
 
