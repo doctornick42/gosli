@@ -29,13 +29,13 @@ func (g *CustomGenerator) Run(args []string) error {
 	log.Printf("Module name: %s", moduleName)
 
 	f := NewFile(moduleName)
-	g.generateInfrastructure(f, "*"+typeName)
-	g.generateFirstOrDefault(f, "*"+typeName)
-	g.generateFirst(f, "*"+typeName)
-	g.generateWhere(f, "*"+typeName)
-	g.generateSelect(f, "*"+typeName)
-	g.generatePage(f, "*"+typeName)
-	g.generateAny(f, "*"+typeName)
+	generateInfrastructure(f, "*"+typeName)
+	generateFirstOrDefault(f, "*"+typeName)
+	generateFirst(f, "*"+typeName)
+	generateWhere(f, "*"+typeName)
+	generateSelect(f, "*"+typeName)
+	generatePage(f, "*"+typeName)
+	generateAny(f, "*"+typeName)
 	g.generateSliceToEqualers(f, "*"+typeName)
 	g.generateContains(f, "*"+typeName)
 	g.generateProcessSliceOperation(f, "*"+typeName)
@@ -93,30 +93,6 @@ func (g *CustomGenerator) getGeneratedFileName(originFilePath, typeName string) 
 
 func (g *CustomGenerator) getEqualGeneratedFileName(originFilePath, typeName string) string {
 	return generateFileName(originFilePath, "equal", typeName)
-}
-
-func (g *CustomGenerator) generateFirstOrDefault(f *File, typeName string) {
-	generateFirstOrDefault(f, typeName)
-}
-
-func (g *CustomGenerator) generateFirst(f *File, typeName string) {
-	generateFirst(f, typeName)
-}
-
-func (g *CustomGenerator) generateWhere(f *File, typeName string) {
-	generateWhere(f, typeName)
-}
-
-func (g *CustomGenerator) generateSelect(f *File, typeName string) {
-	generateSelect(f, typeName)
-}
-
-func (g *CustomGenerator) generatePage(f *File, typeName string) {
-	generatePage(f, typeName)
-}
-
-func (g *CustomGenerator) generateAny(f *File, typeName string) {
-	generateAny(f, typeName)
 }
 
 func (g *CustomGenerator) generateEqualToFillManually(f *File, typeName string) {
@@ -287,8 +263,4 @@ func (g *CustomGenerator) generateInFirstOnly(f *File, typeName string) {
 				),
 			),
 		)
-}
-
-func (g *CustomGenerator) generateInfrastructure(f *File, typeName string) {
-	generateInfrastructure(f, typeName)
 }
