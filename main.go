@@ -11,6 +11,9 @@ func main() {
 	customGenerator := &gen.CustomGenerator{}
 	err := customGenerator.Run(os.Args[1:])
 
+	//primitivesGen := &gen.PrimitivesGenerator{}
+	//err := primitivesGen.Run()
+
 	if err != nil {
 		log.Fatal(err)
 	}

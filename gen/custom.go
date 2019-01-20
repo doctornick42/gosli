@@ -29,19 +29,19 @@ func (g *CustomGenerator) Run(args []string) error {
 	log.Printf("Module name: %s", moduleName)
 
 	f := NewFile(moduleName)
-	g.generateInfrastructure(f, typeName)
-	g.generateFirstOrDefault(f, typeName)
-	g.generateFirst(f, typeName)
-	g.generateWhere(f, typeName)
-	g.generateSelect(f, typeName)
-	g.generatePage(f, typeName)
-	g.generateAny(f, typeName)
-	g.generateSliceToEqualers(f, typeName)
-	g.generateContains(f, typeName)
-	g.generateProcessSliceOperation(f, typeName)
-	g.generateGetUnion(f, typeName)
-	g.generateInFirstOnly(f, typeName)
-	g.generateEqualImplementation(f, typeName)
+	g.generateInfrastructure(f, "*"+typeName)
+	g.generateFirstOrDefault(f, "*"+typeName)
+	g.generateFirst(f, "*"+typeName)
+	g.generateWhere(f, "*"+typeName)
+	g.generateSelect(f, "*"+typeName)
+	g.generatePage(f, "*"+typeName)
+	g.generateAny(f, "*"+typeName)
+	g.generateSliceToEqualers(f, "*"+typeName)
+	g.generateContains(f, "*"+typeName)
+	g.generateProcessSliceOperation(f, "*"+typeName)
+	g.generateGetUnion(f, "*"+typeName)
+	g.generateInFirstOnly(f, "*"+typeName)
+	g.generateEqualImplementation(f, "*"+typeName)
 
 	genFileName := g.getGeneratedFileName(originFilePath, typeName)
 
@@ -88,185 +88,44 @@ func (g *CustomGenerator) getModuleName(originFilePath string) (string, error) {
 }
 
 func (g *CustomGenerator) getGeneratedFileName(originFilePath, typeName string) string {
-	return g.generateFileName(originFilePath, "generated", typeName)
+	return generateFileName(originFilePath, "generated", typeName)
 }
 
 func (g *CustomGenerator) getEqualGeneratedFileName(originFilePath, typeName string) string {
-	return g.generateFileName(originFilePath, "equal", typeName)
-}
-
-func (g *CustomGenerator) generateFileName(originFilePath, suffix, typeName string) string {
-	splitted := strings.Split(originFilePath, "/")
-
-	shortFileName := splitted[len(splitted)-1]
-	generatedName := strings.ToLower(typeName) + "_" + suffix + ".go"
-
-	return strings.Replace(originFilePath, shortFileName, generatedName, 1)
+	return generateFileName(originFilePath, "equal", typeName)
 }
 
 func (g *CustomGenerator) generateFirstOrDefault(f *File, typeName string) {
-	f.Func().
-		Params(
-			Id("r").Id(g.getStructName(typeName)),
-		).
-		Id("FirstOrDefault").
-		Params(
-			Id("f").Id("func(*"+typeName+") bool"),
-		).
-		Id("*"+typeName).
-		Block(
-			For(
-				Id("_, slEl").Op(":=").Range().Id("r").Block(
-					If(
-						Id("f").Call(Id("slEl")),
-					).Block(
-						Return(Id("slEl")),
-					),
-				),
-			),
-			Return(Nil()),
-		)
+	generateFirstOrDefault(f, typeName)
 }
 
 func (g *CustomGenerator) generateFirst(f *File, typeName string) {
-	f.Func().
-		Params(
-			Id("r").Id(g.getStructName(typeName)),
-		).
-		Id("First").
-		Params(
-			Id("f").Id("func(*"+typeName+") bool"),
-		).
-		Params(Id("*"+typeName), Error()).
-		Block(
-			Id("first").Op(":=").Id("r.FirstOrDefault").Call(Id("f")),
-			If(
-				Id("first").Op("==").Nil(),
-			).Block(
-				Return(Nil(), Qual("errors", "New").Call(Lit("Not found"))),
-			),
-			Return(Id("first"), Nil()),
-		)
+	generateFirst(f, typeName)
 }
 
 func (g *CustomGenerator) generateWhere(f *File, typeName string) {
-	f.Func().
-		Params(
-			Id("r").Id(g.getStructName(typeName)),
-		).
-		Id("Where").
-		Params(
-			Id("f").Id("func(*"+typeName+") bool"),
-		).
-		Id("[]*"+typeName).
-		Block(
-			Id("res").Op(":=").Make(Id("[]*"+typeName), Lit(0)),
-
-			For(
-				Id("_, slEl").Op(":=").Range().Id("r").Block(
-					If(
-						Id("f").Call(Id("slEl")),
-					).Block(
-						Id("res").Op("=").Append(Id("res"), Id("slEl")),
-					),
-				),
-			),
-			Return(Id("res")),
-		)
+	generateWhere(f, typeName)
 }
 
 func (g *CustomGenerator) generateSelect(f *File, typeName string) {
-	f.Func().
-		Params(
-			Id("r").Id(g.getStructName(typeName)),
-		).
-		Id("Select").
-		Params(
-			Id("f").Id(fmt.Sprintf("func(*%s) interface{}", typeName)),
-		).
-		Id("[]interface{}").
-		Block(
-			Id("res").Op(":=").Make(Id("[]interface{}"), Len(Id("r"))),
-
-			For(
-				Id("i").Op(":=").Range().Id("r").Block(
-					Id("res").Index(Id("i")).Op("=").
-						Id("f").Call(Id("r").Index(Id("i"))),
-				),
-			),
-			Return(Id("res")),
-		)
+	generateSelect(f, typeName)
 }
 
 func (g *CustomGenerator) generatePage(f *File, typeName string) {
-	f.Func().
-		Params(
-			Id("r").Id(g.getStructName(typeName)),
-		).
-		Id("Page").
-		Params(
-			Id("number").Int64(),
-			Id("perPage").Int64(),
-		).
-		Params(
-			Id("[]*"+typeName),
-			Error(),
-		).
-		Block(
-			If(
-				Id("number").Op("<=").Lit(0),
-			).Block(
-				Return(Nil(), Qual("errors", "New").Params(Lit("Page number should start with 1"))),
-			),
-
-			Id("number").Op("--"),
-
-			Id("first").Op(":=").Id("number").Op("*").Id("perPage"),
-
-			If(
-				Id("first").Op(">").Int64().Params(Len(Id("r"))),
-			).Block(
-				Return(
-					Index().Id("*"+typeName).Block(), Nil(),
-				),
-			),
-
-			Id("last").Op(":=").Id("first").Op("+").Id("perPage"),
-
-			If(
-				Id("last").Op(">").Int64().Params(Len(Id("r"))),
-			).Block(
-				Id("last").Op("=").Int64().Params(Len(Id("r"))),
-			),
-
-			Return(Id("r").Index(Id("first").Op(":").Id("last")), Nil()),
-		)
+	generatePage(f, typeName)
 }
 
 func (g *CustomGenerator) generateAny(f *File, typeName string) {
-	f.Func().
-		Params(
-			Id("r").Id(g.getStructName(typeName)),
-		).
-		Id("Any").
-		Params(
-			Id("f").Id("func(*"+typeName+") bool"),
-		).
-		Params(Bool()).
-		Block(
-			Id("first").Op(":=").Id("r.FirstOrDefault").Call(Id("f")),
-
-			Return(Id("first").Op("!=").Nil()),
-		)
+	generateAny(f, typeName)
 }
 
 func (g *CustomGenerator) generateEqualToFillManually(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id("*" + typeName),
+			Id("r").Id(typeName),
 		).Id("equal").
 		Params(
-			Id("another").Id("*" + typeName),
+			Id("another").Id(typeName),
 		).
 		Bool().
 		Block(
@@ -276,7 +135,7 @@ func (g *CustomGenerator) generateEqualToFillManually(f *File, typeName string) 
 
 func (g *CustomGenerator) generateEqualImplementation(f *File, typeName string) {
 	f.Func().
-		Params(Id("r").Id("*"+typeName)).
+		Params(Id("r").Id(typeName)).
 		Id("Equal").
 		Params(
 			Id("another").Qual("github.com/doctornick42/gosli/lib", "Equaler"),
@@ -286,7 +145,7 @@ func (g *CustomGenerator) generateEqualImplementation(f *File, typeName string) 
 			Error(),
 		).
 		Block(
-			Id("anotherCasted, ok").Op(":=").Id("another").Dot(fmt.Sprintf("(*%s)", typeName)),
+			Id("anotherCasted, ok").Op(":=").Id("another").Dot(fmt.Sprintf("(%s)", typeName)),
 
 			If(
 				Id("!ok"),
@@ -301,7 +160,7 @@ func (g *CustomGenerator) generateEqualImplementation(f *File, typeName string) 
 func (g *CustomGenerator) generateSliceToEqualers(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id(g.getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("sliceToEqualers").
 		Params().
@@ -322,11 +181,11 @@ func (g *CustomGenerator) generateSliceToEqualers(f *File, typeName string) {
 func (g *CustomGenerator) generateContains(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id(g.getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("Contains").
 		Params(
-			Id("el").Id("*"+typeName),
+			Id("el").Id(typeName),
 		).
 		Params(
 			Bool(),
@@ -344,11 +203,11 @@ func (g *CustomGenerator) generateContains(f *File, typeName string) {
 func (g *CustomGenerator) generateProcessSliceOperation(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id(g.getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("processSliceOperation").
 		Params(
-			Id("sl2").Id(g.getStructName(typeName)),
+			Id("sl2").Id(getStructName(typeName)),
 			Id("f").Func().Params(
 				Index().Qual("github.com/doctornick42/gosli/lib", "Equaler"),
 				Index().Qual("github.com/doctornick42/gosli/lib", "Equaler"),
@@ -358,7 +217,7 @@ func (g *CustomGenerator) generateProcessSliceOperation(f *File, typeName string
 			),
 		).
 		Params(
-			Id("[]*"+typeName),
+			Id("[]"+typeName),
 			Error(),
 		).
 		Block(
@@ -372,12 +231,12 @@ func (g *CustomGenerator) generateProcessSliceOperation(f *File, typeName string
 				Return(Nil(), Id("err")),
 			),
 
-			Id("res").Op(":=").Make(Index().Id("*"+typeName), Len(Id("untypedRes"))),
+			Id("res").Op(":=").Make(Index().Id(typeName), Len(Id("untypedRes"))),
 
 			For(
 				Id("i").Op(":=").Range().Id("untypedRes"),
 			).Block(
-				Id("res[i]").Op("=").Id("untypedRes[i]").Dot(fmt.Sprintf("(*%s)", typeName)),
+				Id("res[i]").Op("=").Id("untypedRes[i]").Dot(fmt.Sprintf("(%s)", typeName)),
 			),
 
 			Return(Id("res"), Nil()),
@@ -387,14 +246,14 @@ func (g *CustomGenerator) generateProcessSliceOperation(f *File, typeName string
 func (g *CustomGenerator) generateGetUnion(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id(g.getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("GetUnion").
 		Params(
-			Id("sl2").Index().Id("*"+typeName),
+			Id("sl2").Index().Id(typeName),
 		).
 		Params(
-			Index().Id("*"+typeName),
+			Index().Id(typeName),
 			Error(),
 		).
 		Block(
@@ -410,14 +269,14 @@ func (g *CustomGenerator) generateGetUnion(f *File, typeName string) {
 func (g *CustomGenerator) generateInFirstOnly(f *File, typeName string) {
 	f.Func().
 		Params(
-			Id("r").Id(g.getStructName(typeName)),
+			Id("r").Id(getStructName(typeName)),
 		).
 		Id("InFirstOnly").
 		Params(
-			Id("sl2").Index().Id("*"+typeName),
+			Id("sl2").Index().Id(typeName),
 		).
 		Params(
-			Index().Id("*"+typeName),
+			Index().Id(typeName),
 			Error(),
 		).
 		Block(
@@ -430,12 +289,6 @@ func (g *CustomGenerator) generateInFirstOnly(f *File, typeName string) {
 		)
 }
 
-func (g *CustomGenerator) getStructName(typeName string) string {
-	return typeName + "Slice"
-}
-
 func (g *CustomGenerator) generateInfrastructure(f *File, typeName string) {
-	structName := g.getStructName(typeName)
-
-	f.Type().Id(structName).Index().Id("*" + typeName)
+	generateInfrastructure(f, typeName)
 }
