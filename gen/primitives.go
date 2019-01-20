@@ -32,7 +32,7 @@ func (g *PrimitivesGenerator) Run() error {
 		generateAny(f, typeName)
 		g.generateContains(f, typeName)
 		g.generateGetUnion(f, typeName)
-		// g.generateInFirstOnly(f, "*"+typeName)
+		g.generateInFirstOnly(f, typeName)
 		// g.generateEqualImplementation(f, "*"+typeName)
 
 		fakeOriginPath := fmt.Sprintf("%s/fake.go", primitivesModuleName)
@@ -152,6 +152,50 @@ func (g *PrimitivesGenerator) generateGetUnion(f *File, typeName string) {
 								),
 							)...,
 						),
+					),
+				),
+			),
+
+			Return(Id("result"), Nil()),
+		)
+}
+
+func (g *PrimitivesGenerator) generateInFirstOnly(f *File, typeName string) {
+	f.Func().
+		Params(
+			Id("r").Id(getStructName(typeName)),
+		).
+		Id("InFirstOnly").
+		Params(
+			Id("sl2").Index().Id(typeName),
+		).
+		Params(
+			Index().Id(typeName),
+			Error(),
+		).
+		Block(
+			Id("result").Op(":=").Make(Index().Id(typeName), Lit(0)),
+
+			For(
+				Id("_, sl1El").Op(":=").Range().Id("r").Block(
+					Id("found").Op(":=").False(),
+
+					For(
+						Id("_, sl2El").Op(":=").Range().Id("sl2").Block(
+							append(
+								g.getEqualStatement("sl1El", "sl2El", typeName),
+								If(
+									Id("areEqual"),
+								).Block(
+									Id("found").Op("=").True(),
+									Continue(),
+								),
+							)...,
+						),
+					),
+
+					If(Id("!found")).Block(
+						Id("result").Op("=").Append(Id("result"), Id("sl1El")),
 					),
 				),
 			),
