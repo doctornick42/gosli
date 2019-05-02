@@ -24,7 +24,7 @@ func modifyFirstRune(origin string, f func(rune) rune) string {
 
 func getStructName(typeName string) string {
 	if string(typeName[0]) == "*" {
-		typeName = strings.TrimPrefix(typeName, "*") + "Pointer"
+		typeName = strings.TrimPrefix(typeName, "*")
 	}
 
 	typeName = firstRuneToUpper(typeName)
