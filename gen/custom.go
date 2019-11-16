@@ -54,7 +54,7 @@ func (g *CustomGenerator) Run(args []string) error {
 	genFileName = g.getEqualGeneratedFileName(originFilePath, typeName)
 	if _, err := os.Stat(genFileName); os.IsNotExist(err) {
 		f = NewFile(moduleName)
-		g.generateEqualToFillManually(f, typeName)
+		g.generateEqualToFillManually(f, "*"+typeName)
 
 		log.Printf("Generated filename: %s", genFileName)
 		return f.Save(genFileName)
