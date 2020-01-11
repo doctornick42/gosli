@@ -13,6 +13,44 @@ import (
 
 type CustomGenerator struct{}
 
+func (g *CustomGenerator) run(typeName, moduleName, originFilePath string) error {
+	f := NewFile(moduleName)
+	generateInfrastructure(f, typeName)
+	generateFirstOrDefault(f, typeName)
+	generateFirst(f, typeName)
+	generateWhere(f, typeName)
+	generateSelect(f, typeName)
+	generatePage(f, typeName)
+	generateAny(f, typeName)
+	g.generateSliceToEqualers(f, typeName)
+	g.generateContains(f, typeName)
+	g.generateProcessSliceOperation(f, typeName)
+	g.generateGetUnion(f, typeName)
+	g.generateInFirstOnly(f, typeName)
+	g.generateEqualImplementation(f, typeName)
+
+	pureTypeName := strings.TrimLeft(typeName, "*")
+
+	genFileName := g.getGeneratedFileName(originFilePath, pureTypeName)
+
+	log.Printf("Generated filename: %s", genFileName)
+	err := f.Save(genFileName)
+	if err != nil {
+		return err
+	}
+
+	genFileName = g.getEqualGeneratedFileName(originFilePath, pureTypeName)
+	if _, err := os.Stat(genFileName); os.IsNotExist(err) {
+		f = NewFile(moduleName)
+		g.generateEqualToFillManually(f, typeName)
+
+		log.Printf("Generated filename: %s", genFileName)
+		return f.Save(genFileName)
+	}
+
+	return nil
+}
+
 func (g *CustomGenerator) Run(args []string) error {
 	if len(args) < 2 {
 		return errors.New("Wrong amount of arguments")
@@ -28,39 +66,7 @@ func (g *CustomGenerator) Run(args []string) error {
 
 	log.Printf("Module name: %s", moduleName)
 
-	f := NewFile(moduleName)
-	generateInfrastructure(f, "*"+typeName)
-	generateFirstOrDefault(f, "*"+typeName)
-	generateFirst(f, "*"+typeName)
-	generateWhere(f, "*"+typeName)
-	generateSelect(f, "*"+typeName)
-	generatePage(f, "*"+typeName)
-	generateAny(f, "*"+typeName)
-	g.generateSliceToEqualers(f, "*"+typeName)
-	g.generateContains(f, "*"+typeName)
-	g.generateProcessSliceOperation(f, "*"+typeName)
-	g.generateGetUnion(f, "*"+typeName)
-	g.generateInFirstOnly(f, "*"+typeName)
-	g.generateEqualImplementation(f, "*"+typeName)
-
-	genFileName := g.getGeneratedFileName(originFilePath, typeName)
-
-	log.Printf("Generated filename: %s", genFileName)
-	err = f.Save(genFileName)
-	if err != nil {
-		return err
-	}
-
-	genFileName = g.getEqualGeneratedFileName(originFilePath, typeName)
-	if _, err := os.Stat(genFileName); os.IsNotExist(err) {
-		f = NewFile(moduleName)
-		g.generateEqualToFillManually(f, "*"+typeName)
-
-		log.Printf("Generated filename: %s", genFileName)
-		return f.Save(genFileName)
-	}
-
-	return nil
+	return g.run("*"+typeName, moduleName, originFilePath)
 }
 
 func (g *CustomGenerator) getModuleName(originFilePath string) (string, error) {
