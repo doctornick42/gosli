@@ -13,14 +13,17 @@ func (r FakeTypeSlice) FirstOrDefault(f func(*FakeType) bool) *FakeType {
 			return slEl
 		}
 	}
-	return nil
+	var defVal *FakeType
+	return defVal
 }
 func (r FakeTypeSlice) First(f func(*FakeType) bool) (*FakeType, error) {
-	first := r.FirstOrDefault(f)
-	if first == nil {
-		return nil, errors.New("Not found")
+	for _, slEl := range r {
+		if f(slEl) {
+			return slEl, nil
+		}
 	}
-	return first, nil
+	var defVal *FakeType
+	return defVal, errors.New("Not found")
 }
 func (r FakeTypeSlice) Where(f func(*FakeType) bool) []*FakeType {
 	res := make([]*FakeType, 0)
@@ -54,8 +57,8 @@ func (r FakeTypeSlice) Page(number int64, perPage int64) ([]*FakeType, error) {
 	return r[first:last], nil
 }
 func (r FakeTypeSlice) Any(f func(*FakeType) bool) bool {
-	first := r.FirstOrDefault(f)
-	return first != nil
+	_, err := r.First(f)
+	return err == nil
 }
 func (r FakeTypeSlice) sliceToEqualers() []lib.Equaler {
 	equalerSl := make([]lib.Equaler, len(r))
