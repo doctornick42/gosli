@@ -766,6 +766,54 @@ func (ts *FakeTypeTestSuite) TestFakeTypeInFirstOnly() {
 	}
 }
 
+// func (ts *FakeTypeTestSuite) TestFakeTypeEqual() {
+// 	testCases := []struct {
+// 		name        string
+// 		left, right FakeType
+// 		expectedRes bool
+// 		expectedErr error
+// 	}{
+// 		{
+// 			name: "equal",
+// 			left: FakeType{
+// 				A: 1,
+// 				B: "one",
+// 			},
+// 			right: FakeType{
+// 				A: 1,
+// 				B: "one",
+// 			},
+// 			expectedRes: true,
+// 			expectedErr: nil,
+// 		},
+// 		{
+// 			name: "not equal",
+// 			left: FakeType{
+// 				A: 1,
+// 				B: "one",
+// 			},
+// 			right: FakeType{
+// 				A: 2,
+// 				B: "two",
+// 			},
+// 			expectedRes: false,
+// 			expectedErr: nil,
+// 		},
+// 	}
+
+// 	for _, tc := range testCases {
+// 		ts.initDependencies()
+
+// 		ts.T().Run(tc.name, func(t *testing.T) {
+
+// 			res, err := tc.left.Equal(tc.right)
+
+// 			assert.EqualValues(t, tc.expectedErr, err)
+// 			assert.EqualValues(t, tc.expectedRes, res)
+// 		})
+// 	}
+// }
+
 func (ts *FakeTypeTestSuite) initDependencies() {
 	ts.mockCtrl = gomock.NewController(ts.T())
 }

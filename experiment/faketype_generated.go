@@ -63,41 +63,60 @@ func (r FakeTypeSlice) Any(f func(FakeType) bool) bool {
 func (r FakeTypeSlice) sliceToEqualers() []lib.Equaler {
 	equalerSl := make([]lib.Equaler, len(r))
 	for i := range r {
-		equalerSl[i] = r[i]
+		equalerSl[i] = &r[i]
 	}
 	return equalerSl
 }
 func (r FakeTypeSlice) Contains(el FakeType) (bool, error) {
 	equalerSl := r.sliceToEqualers()
-	return lib.Contains(equalerSl, el)
+	return lib.Contains(equalerSl, &el)
 }
-func (r FakeTypeSlice) processSliceOperation(sl2 FakeTypeSlice, f func([]lib.Equaler, []lib.Equaler) ([]lib.Equaler, error)) ([]FakeType, error) {
+func (r FakeTypeSlice) processSliceOperation(sl2 FakeTypeSlice, f func([]lib.Equaler, []lib.Equaler) ([]lib.Equaler, error)) ([]*FakeType, error) {
 	equalerSl1 := r.sliceToEqualers()
 	equalerSl2 := sl2.sliceToEqualers()
 	untypedRes, err := f(equalerSl1, equalerSl2)
 	if err != nil {
 		return nil, err
 	}
-	res := make([]FakeType, len(untypedRes))
+	res := make([]*FakeType, len(untypedRes))
 	for i := range untypedRes {
-		res[i] = untypedRes[i].(FakeType)
+		res[i] = untypedRes[i].(*FakeType)
 	}
 	return res, nil
 }
 func (r FakeTypeSlice) GetUnion(sl2 []FakeType) ([]FakeType, error) {
-	return r.processSliceOperation(sl2, lib.GetUnion)
+	sl, err := r.processSliceOperation(sl2, lib.GetUnion)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]FakeType, len(sl))
+	for i, s := range sl {
+		res[i] = *s
+	}
+	return res, nil
 }
 func (r FakeTypeSlice) InFirstOnly(sl2 []FakeType) ([]FakeType, error) {
-	return r.processSliceOperation(sl2, lib.InFirstOnly)
-}
-func (r FakeType) Equal(another lib.Equaler) (bool, error) {
-	anotherCasted, ok := another.(FakeType)
-	if !ok {
-		anotherCastedP, ok := another.(*FakeType)
-		if !ok {
-			return false, errors.New("Types mismatch")
-		}
-		return anotherCastedP != nil && r.equal(*anotherCastedP), nil
+	//return r.processSliceOperation(sl2, lib.InFirstOnly)
+	sl, err := r.processSliceOperation(sl2, lib.InFirstOnly)
+	if err != nil {
+		return nil, err
 	}
-	return r.equal(anotherCasted), nil
+	res := make([]FakeType, len(sl))
+	for i, s := range sl {
+		res[i] = *s
+	}
+	return res, nil
 }
+
+// func (r FakeType) Equal(another lib.Equaler) (bool, error) {
+// 	anotherCasted, ok := another.(FakeType)
+// 	if !ok {
+// 		anotherCastedP, ok := another.(*FakeType)
+// 		if !ok {
+// 			return false, errors.New("Types mismatch")
+// 		}
+
+// 		return anotherCastedP != nil && r.equal(*anotherCastedP), nil
+// 	}
+// 	return r.equal(anotherCasted), nil
+// }

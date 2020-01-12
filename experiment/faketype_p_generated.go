@@ -91,10 +91,10 @@ func (r FakeTypePSlice) InFirstOnly(sl2 []*FakeType) ([]*FakeType, error) {
 	return r.processSliceOperation(sl2, lib.InFirstOnly)
 }
 
-// func (r *FakeType) Equal(another lib.Equaler) (bool, error) {
-// 	anotherCasted, ok := another.(*FakeType)
-// 	if !ok {
-// 		return false, errors.New("Types mismatch")
-// 	}
-// 	return r.equal(anotherCasted), nil
-// }
+func (r *FakeType) Equal(another lib.Equaler) (bool, error) {
+	anotherCasted, ok := another.(*FakeType)
+	if !ok {
+		return false, errors.New("Types mismatch")
+	}
+	return r.equal(anotherCasted), nil
+}

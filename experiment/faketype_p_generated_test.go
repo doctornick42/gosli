@@ -1,6 +1,7 @@
 package experiment
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -546,6 +547,22 @@ func (ts *FakeTypePTestSuite) TestFakeTypeContains() {
 		},
 	}
 
+	slWithNil := []*FakeType{
+		&FakeType{
+			A: 1,
+			B: "one",
+		},
+		&FakeType{
+			A: 2,
+			B: "two",
+		},
+		&FakeType{
+			A: 3,
+			B: "three",
+		},
+		nil,
+	}
+
 	testCases := []struct {
 		name        string
 		sl          []*FakeType
@@ -571,6 +588,27 @@ func (ts *FakeTypePTestSuite) TestFakeTypeContains() {
 			},
 			expectedRes: false,
 		},
+		{
+			name:        "element is nil, not in slice",
+			sl:          sl,
+			el:          nil,
+			expectedRes: false,
+		},
+		{
+			name:        "element is nil, in slice",
+			sl:          slWithNil,
+			el:          nil,
+			expectedRes: true,
+		},
+		{
+			name: "slice contains nil",
+			sl:   slWithNil,
+			el: &FakeType{
+				A: 2,
+				B: "two",
+			},
+			expectedRes: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -580,7 +618,11 @@ func (ts *FakeTypePTestSuite) TestFakeTypeContains() {
 			res, err := FakeTypePSlice(tc.sl).Contains(tc.el)
 
 			if tc.expectedErr == nil {
-				assert.Equal(t, tc.expectedRes, res)
+				r := assert.Equal(t, tc.expectedRes, res)
+				if !r {
+					j, _ := json.Marshal(tc.sl)
+					t.Errorf("Slice: %s", string(j))
+				}
 			} else {
 				assert.NotNil(t, err)
 				assert.Equal(t, tc.expectedErr.Error(), err.Error())
@@ -654,6 +696,36 @@ func (ts *FakeTypePTestSuite) TestFakeTypeGetUnion() {
 				},
 			},
 			expectedRes: []*FakeType{},
+		},
+		{
+			name: "union with nils",
+			sl1:  append(sl, nil),
+			sl2: []*FakeType{
+				&FakeType{
+					A: 2,
+					B: "two",
+				},
+				&FakeType{
+					A: 3,
+					B: "three",
+				},
+				&FakeType{
+					A: 4,
+					B: "four",
+				},
+				nil,
+			},
+			expectedRes: []*FakeType{
+				&FakeType{
+					A: 2,
+					B: "two",
+				},
+				&FakeType{
+					A: 3,
+					B: "three",
+				},
+				nil,
+			},
 		},
 	}
 
@@ -748,6 +820,31 @@ func (ts *FakeTypePTestSuite) TestFakeTypeInFirstOnly() {
 				},
 			},
 		},
+		{
+			name: "unioin with nils",
+			sl1:  append(sl, nil),
+			sl2: []*FakeType{
+				&FakeType{
+					A: 5,
+					B: "five",
+				},
+				&FakeType{
+					A: 1,
+					B: "one",
+				},
+			},
+			expectedRes: []*FakeType{
+				&FakeType{
+					A: 2,
+					B: "two",
+				},
+				&FakeType{
+					A: 3,
+					B: "three",
+				},
+				nil,
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -762,6 +859,81 @@ func (ts *FakeTypePTestSuite) TestFakeTypeInFirstOnly() {
 				assert.NotNil(t, err)
 				assert.Equal(t, tc.expectedErr.Error(), err.Error())
 			}
+		})
+	}
+}
+
+func (ts *FakeTypePTestSuite) TestFakeTypeEqual() {
+	testCases := []struct {
+		name        string
+		left, right *FakeType
+		expectedRes bool
+		expectedErr error
+	}{
+		{
+			name: "equal",
+			left: &FakeType{
+				A: 1,
+				B: "one",
+			},
+			right: &FakeType{
+				A: 1,
+				B: "one",
+			},
+			expectedRes: true,
+			expectedErr: nil,
+		},
+		{
+			name: "not equal",
+			left: &FakeType{
+				A: 1,
+				B: "one",
+			},
+			right: &FakeType{
+				A: 2,
+				B: "two",
+			},
+			expectedRes: false,
+			expectedErr: nil,
+		},
+		{
+			name:        "both are nil",
+			left:        nil,
+			right:       nil,
+			expectedRes: true,
+			expectedErr: nil,
+		},
+		{
+			name: "left is nil",
+			left: nil,
+			right: &FakeType{
+				A: 1,
+				B: "two",
+			},
+			expectedRes: false,
+			expectedErr: nil,
+		},
+		{
+			name: "right is nil",
+			left: &FakeType{
+				A: 1,
+				B: "two",
+			},
+			right:       nil,
+			expectedRes: false,
+			expectedErr: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		ts.initDependencies()
+
+		ts.T().Run(tc.name, func(t *testing.T) {
+
+			res, err := tc.left.Equal(tc.right)
+
+			assert.EqualValues(t, tc.expectedErr, err)
+			assert.EqualValues(t, tc.expectedRes, res)
 		})
 	}
 }
