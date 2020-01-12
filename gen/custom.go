@@ -29,9 +29,9 @@ func (g *CustomGenerator) run(typeName, moduleName, originFilePath string) error
 	g.generateInFirstOnly(f, typeName)
 	g.generateEqualImplementation(f, typeName)
 
-	pureTypeName := strings.TrimLeft(typeName, "*")
+	//pureTypeName := strings.TrimLeft(typeName, "*")
 
-	genFileName := g.getGeneratedFileName(originFilePath, pureTypeName)
+	genFileName := g.getGeneratedFileName(originFilePath, typeName)
 
 	log.Printf("Generated filename: %s", genFileName)
 	err := f.Save(genFileName)
@@ -39,7 +39,7 @@ func (g *CustomGenerator) run(typeName, moduleName, originFilePath string) error
 		return err
 	}
 
-	genFileName = g.getEqualGeneratedFileName(originFilePath, pureTypeName)
+	genFileName = g.getEqualGeneratedFileName(originFilePath, typeName)
 	if _, err := os.Stat(genFileName); os.IsNotExist(err) {
 		f = NewFile(moduleName)
 		g.generateEqualToFillManually(f, typeName)
@@ -65,6 +65,11 @@ func (g *CustomGenerator) Run(args []string) error {
 	}
 
 	log.Printf("Module name: %s", moduleName)
+
+	err = g.run(typeName, moduleName, originFilePath)
+	if err != nil {
+		return err
+	}
 
 	return g.run("*"+typeName, moduleName, originFilePath)
 }
@@ -94,11 +99,21 @@ func (g *CustomGenerator) getModuleName(originFilePath string) (string, error) {
 }
 
 func (g *CustomGenerator) getGeneratedFileName(originFilePath, typeName string) string {
-	return generateFileName(originFilePath, "generated", typeName)
+	suffix := "generated"
+	if typeName[0] == '*' {
+		suffix = "p_" + suffix
+		typeName = strings.TrimLeft(typeName, "*")
+	}
+	return generateFileName(originFilePath, suffix, typeName)
 }
 
 func (g *CustomGenerator) getEqualGeneratedFileName(originFilePath, typeName string) string {
-	return generateFileName(originFilePath, "equal", typeName)
+	suffix := "equal"
+	if typeName[0] == '*' {
+		suffix = "p_" + suffix
+		typeName = strings.TrimLeft(typeName, "*")
+	}
+	return generateFileName(originFilePath, suffix, typeName)
 }
 
 func (g *CustomGenerator) generateEqualToFillManually(f *File, typeName string) {

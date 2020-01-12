@@ -23,13 +23,15 @@ func modifyFirstRune(origin string, f func(rune) rune) string {
 }
 
 func getStructName(typeName string) string {
+	suffix := "Slice"
 	if string(typeName[0]) == "*" {
 		typeName = strings.TrimPrefix(typeName, "*")
+		suffix = "P" + suffix
 	}
 
 	typeName = firstRuneToUpper(typeName)
 
-	return typeName + "Slice"
+	return typeName + suffix
 }
 
 func generateInfrastructure(f *File, typeName string) {
