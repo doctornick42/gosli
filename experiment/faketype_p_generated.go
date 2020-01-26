@@ -25,14 +25,14 @@ func (r FakeTypePSlice) First(f func(*FakeType) bool) (*FakeType, error) {
 	var defVal *FakeType
 	return defVal, errors.New("Not found")
 }
-func (r FakeTypePSlice) Where(f func(*FakeType) bool) []*FakeType {
+func (r FakeTypePSlice) Where(f func(*FakeType) bool) FakeTypePSlice {
 	res := make([]*FakeType, 0)
 	for _, slEl := range r {
 		if f(slEl) {
 			res = append(res, slEl)
 		}
 	}
-	return res
+	return FakeTypePSlice(res)
 }
 func (r FakeTypePSlice) Select(f func(*FakeType) interface{}) []interface{} {
 	res := make([]interface{}, len(r))
@@ -41,7 +41,7 @@ func (r FakeTypePSlice) Select(f func(*FakeType) interface{}) []interface{} {
 	}
 	return res
 }
-func (r FakeTypePSlice) Page(number int64, perPage int64) ([]*FakeType, error) {
+func (r FakeTypePSlice) Page(number int64, perPage int64) (FakeTypePSlice, error) {
 	if number <= 0 {
 		return nil, errors.New("Page number should start with 1")
 	}
@@ -54,7 +54,7 @@ func (r FakeTypePSlice) Page(number int64, perPage int64) ([]*FakeType, error) {
 	if last > int64(len(r)) {
 		last = int64(len(r))
 	}
-	return r[first:last], nil
+	return FakeTypePSlice(r[first:last]), nil
 }
 func (r FakeTypePSlice) Any(f func(*FakeType) bool) bool {
 	_, err := r.First(f)
@@ -71,7 +71,7 @@ func (r FakeTypePSlice) Contains(el *FakeType) (bool, error) {
 	equalerSl := r.sliceToEqualers()
 	return lib.Contains(equalerSl, el)
 }
-func (r FakeTypePSlice) processSliceOperation(sl2 FakeTypePSlice, f func([]lib.Equaler, []lib.Equaler) ([]lib.Equaler, error)) ([]*FakeType, error) {
+func (r FakeTypePSlice) processSliceOperation(sl2 FakeTypePSlice, f func([]lib.Equaler, []lib.Equaler) ([]lib.Equaler, error)) (FakeTypePSlice, error) {
 	equalerSl1 := r.sliceToEqualers()
 	equalerSl2 := sl2.sliceToEqualers()
 	untypedRes, err := f(equalerSl1, equalerSl2)
@@ -82,15 +82,14 @@ func (r FakeTypePSlice) processSliceOperation(sl2 FakeTypePSlice, f func([]lib.E
 	for i := range untypedRes {
 		res[i] = untypedRes[i].(*FakeType)
 	}
-	return res, nil
+	return FakeTypePSlice(res), nil
 }
-func (r FakeTypePSlice) GetUnion(sl2 []*FakeType) ([]*FakeType, error) {
+func (r FakeTypePSlice) GetUnion(sl2 []*FakeType) (FakeTypePSlice, error) {
 	return r.processSliceOperation(sl2, lib.GetUnion)
 }
-func (r FakeTypePSlice) InFirstOnly(sl2 []*FakeType) ([]*FakeType, error) {
+func (r FakeTypePSlice) InFirstOnly(sl2 []*FakeType) (FakeTypePSlice, error) {
 	return r.processSliceOperation(sl2, lib.InFirstOnly)
 }
-
 func (r *FakeType) Equal(another lib.Equaler) (bool, error) {
 	anotherCasted, ok := another.(*FakeType)
 	if !ok {

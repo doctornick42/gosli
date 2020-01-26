@@ -231,6 +231,7 @@ func (g *CustomGenerator) generateContains(f *File, typeName string) {
 func (g *CustomGenerator) generateProcessSliceOperation(f *File, typeName string) {
 	castingType := typeName
 	untypedResEl := "untypedRes[i]"
+	structName := getStructName(typeName)
 	if g.isTypePointer(typeName) {
 	} else {
 		untypedResEl = "*" + untypedResEl
@@ -238,11 +239,11 @@ func (g *CustomGenerator) generateProcessSliceOperation(f *File, typeName string
 	}
 	f.Func().
 		Params(
-			Id("r").Id(getStructName(typeName)),
+			Id("r").Id(structName),
 		).
 		Id("processSliceOperation").
 		Params(
-			Id("sl2").Id(getStructName(typeName)),
+			Id("sl2").Id(structName),
 			Id("f").Func().Params(
 				Index().Qual("github.com/doctornick42/gosli/lib", "Equaler"),
 				Index().Qual("github.com/doctornick42/gosli/lib", "Equaler"),
@@ -252,7 +253,7 @@ func (g *CustomGenerator) generateProcessSliceOperation(f *File, typeName string
 			),
 		).
 		Params(
-			Id("[]"+typeName),
+			Id(structName),
 			Error(),
 		).
 		Block(
@@ -274,21 +275,25 @@ func (g *CustomGenerator) generateProcessSliceOperation(f *File, typeName string
 				Id("res[i]").Op("=").Id(untypedResEl).Dot(fmt.Sprintf("(%s)", castingType)),
 			),
 
-			Return(Id("res"), Nil()),
+			Return(
+				Id(structName).Call(Id("res")),
+				Nil(),
+			),
 		)
 }
 
 func (g *CustomGenerator) generateGetUnion(f *File, typeName string) {
+	structName := getStructName(typeName)
 	f.Func().
 		Params(
-			Id("r").Id(getStructName(typeName)),
+			Id("r").Id(structName),
 		).
 		Id("GetUnion").
 		Params(
 			Id("sl2").Index().Id(typeName),
 		).
 		Params(
-			Index().Id(typeName),
+			Id(structName),
 			Error(),
 		).
 		Block(
@@ -302,16 +307,17 @@ func (g *CustomGenerator) generateGetUnion(f *File, typeName string) {
 }
 
 func (g *CustomGenerator) generateInFirstOnly(f *File, typeName string) {
+	structName := getStructName(typeName)
 	f.Func().
 		Params(
-			Id("r").Id(getStructName(typeName)),
+			Id("r").Id(structName),
 		).
 		Id("InFirstOnly").
 		Params(
 			Id("sl2").Index().Id(typeName),
 		).
 		Params(
-			Index().Id(typeName),
+			Id(structName),
 			Error(),
 		).
 		Block(
