@@ -23,13 +23,15 @@ func modifyFirstRune(origin string, f func(rune) rune) string {
 }
 
 func getStructName(typeName string) string {
+	suffix := "Slice"
 	if string(typeName[0]) == "*" {
 		typeName = strings.TrimPrefix(typeName, "*")
+		suffix = "P" + suffix
 	}
 
 	typeName = firstRuneToUpper(typeName)
 
-	return typeName + "Slice"
+	return typeName + suffix
 }
 
 func generateInfrastructure(f *File, typeName string) {
@@ -109,15 +111,16 @@ func generateFirstOrDefault(f *File, typeName string) {
 }
 
 func generateWhere(f *File, typeName string) {
+	structName := getStructName(typeName)
 	f.Func().
 		Params(
-			Id("r").Id(getStructName(typeName)),
+			Id("r").Id(structName),
 		).
 		Id("Where").
 		Params(
 			Id("f").Id("func("+typeName+") bool"),
 		).
-		Id("[]"+typeName).
+		Id(structName).
 		Block(
 			Id("res").Op(":=").Make(Id("[]"+typeName), Lit(0)),
 
@@ -130,7 +133,7 @@ func generateWhere(f *File, typeName string) {
 					),
 				),
 			),
-			Return(Id("res")),
+			Return(Id(structName).Call(Id("res"))),
 		)
 }
 
@@ -158,9 +161,10 @@ func generateSelect(f *File, typeName string) {
 }
 
 func generatePage(f *File, typeName string) {
+	structName := getStructName(typeName)
 	f.Func().
 		Params(
-			Id("r").Id(getStructName(typeName)),
+			Id("r").Id(structName),
 		).
 		Id("Page").
 		Params(
@@ -168,7 +172,7 @@ func generatePage(f *File, typeName string) {
 			Id("perPage").Int64(),
 		).
 		Params(
-			Id("[]"+typeName),
+			Id(structName),
 			Error(),
 		).
 		Block(
@@ -198,7 +202,12 @@ func generatePage(f *File, typeName string) {
 				Id("last").Op("=").Int64().Params(Len(Id("r"))),
 			),
 
-			Return(Id("r").Index(Id("first").Op(":").Id("last")), Nil()),
+			Return(
+				Id(structName).Call(
+					Id("r").Index(Id("first").Op(":").Id("last")),
+				),
+				Nil(),
+			),
 		)
 }
 

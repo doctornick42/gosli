@@ -33,7 +33,7 @@ func BenchmarkFirst(b *testing.B) {
 			}
 		}
 
-		FakeTypeSlice(sl).First(filter)
+		FakeTypePSlice(sl).First(filter)
 	}
 }
 
@@ -66,7 +66,7 @@ func BenchmarkFirstOrDefault(b *testing.B) {
 			}
 		}
 
-		FakeTypeSlice(sl).FirstOrDefault(filter)
+		FakeTypePSlice(sl).FirstOrDefault(filter)
 	}
 }
 
@@ -95,7 +95,7 @@ func BenchmarkSelect(b *testing.B) {
 			}
 		}
 
-		FakeTypeSlice(sl).Select(filter)
+		FakeTypePSlice(sl).Select(filter)
 	}
 }
 
@@ -128,7 +128,7 @@ func BenchmarkWhere(b *testing.B) {
 			}
 		}
 
-		FakeTypeSlice(sl).Where(filter)
+		FakeTypePSlice(sl).Where(filter)
 	}
 }
 
@@ -167,7 +167,7 @@ func BenchmarkPage(b *testing.B) {
 			page = 2
 		}
 
-		FakeTypeSlice(sl).Page(page, 3)
+		FakeTypePSlice(sl).Page(page, 3)
 	}
 }
 
@@ -202,7 +202,7 @@ func BenchmarkContains(b *testing.B) {
 			}
 		}
 
-		FakeTypeSlice(sl).Contains(el)
+		FakeTypePSlice(sl).Contains(el)
 	}
 }
 
@@ -257,7 +257,7 @@ func BenchmarkGetUnion(b *testing.B) {
 			sl2 = sl2WithoutUnion
 		}
 
-		FakeTypeSlice(sl).GetUnion(sl2)
+		FakeTypePSlice(sl).GetUnion(sl2)
 	}
 }
 
@@ -312,6 +312,6 @@ func BenchmarkInFirstOnly(b *testing.B) {
 			sl2 = sl2WithoutUnion
 		}
 
-		FakeTypeSlice(sl).InFirstOnly(sl2)
+		FakeTypePSlice(sl).InFirstOnly(sl2)
 	}
 }

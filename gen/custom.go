@@ -13,6 +13,48 @@ import (
 
 type CustomGenerator struct{}
 
+func (g *CustomGenerator) run(typeName, moduleName, originFilePath string) error {
+	f := NewFile(moduleName)
+	generateInfrastructure(f, typeName)
+	generateFirstOrDefault(f, typeName)
+	generateFirst(f, typeName)
+	generateWhere(f, typeName)
+	generateSelect(f, typeName)
+	generatePage(f, typeName)
+	generateAny(f, typeName)
+	g.generateSliceToEqualers(f, typeName)
+	g.generateContains(f, typeName)
+	g.generateProcessSliceOperation(f, typeName)
+	g.generateGetUnion(f, typeName)
+	g.generateInFirstOnly(f, typeName)
+
+	if typeName[0] == '*' {
+		g.generateEqualImplementation(f, typeName)
+	}
+	//pureTypeName := strings.TrimLeft(typeName, "*")
+
+	genFileName := g.getGeneratedFileName(originFilePath, typeName)
+
+	log.Printf("Generated filename: %s", genFileName)
+	err := f.Save(genFileName)
+	if err != nil {
+		return err
+	}
+
+	if typeName[0] == '*' {
+		genFileName = g.getEqualGeneratedFileName(originFilePath, typeName)
+		if _, err := os.Stat(genFileName); os.IsNotExist(err) {
+			f = NewFile(moduleName)
+			g.generateEqualToFillManually(f, typeName)
+
+			log.Printf("Generated filename: %s", genFileName)
+			return f.Save(genFileName)
+		}
+	}
+
+	return nil
+}
+
 func (g *CustomGenerator) Run(args []string) error {
 	if len(args) < 2 {
 		return errors.New("Wrong amount of arguments")
@@ -28,39 +70,12 @@ func (g *CustomGenerator) Run(args []string) error {
 
 	log.Printf("Module name: %s", moduleName)
 
-	f := NewFile(moduleName)
-	generateInfrastructure(f, "*"+typeName)
-	generateFirstOrDefault(f, "*"+typeName)
-	generateFirst(f, "*"+typeName)
-	generateWhere(f, "*"+typeName)
-	generateSelect(f, "*"+typeName)
-	generatePage(f, "*"+typeName)
-	generateAny(f, "*"+typeName)
-	g.generateSliceToEqualers(f, "*"+typeName)
-	g.generateContains(f, "*"+typeName)
-	g.generateProcessSliceOperation(f, "*"+typeName)
-	g.generateGetUnion(f, "*"+typeName)
-	g.generateInFirstOnly(f, "*"+typeName)
-	g.generateEqualImplementation(f, "*"+typeName)
-
-	genFileName := g.getGeneratedFileName(originFilePath, typeName)
-
-	log.Printf("Generated filename: %s", genFileName)
-	err = f.Save(genFileName)
+	err = g.run(typeName, moduleName, originFilePath)
 	if err != nil {
 		return err
 	}
 
-	genFileName = g.getEqualGeneratedFileName(originFilePath, typeName)
-	if _, err := os.Stat(genFileName); os.IsNotExist(err) {
-		f = NewFile(moduleName)
-		g.generateEqualToFillManually(f, "*"+typeName)
-
-		log.Printf("Generated filename: %s", genFileName)
-		return f.Save(genFileName)
-	}
-
-	return nil
+	return g.run("*"+typeName, moduleName, originFilePath)
 }
 
 func (g *CustomGenerator) getModuleName(originFilePath string) (string, error) {
@@ -88,11 +103,20 @@ func (g *CustomGenerator) getModuleName(originFilePath string) (string, error) {
 }
 
 func (g *CustomGenerator) getGeneratedFileName(originFilePath, typeName string) string {
-	return generateFileName(originFilePath, "generated", typeName)
+	suffix := "generated"
+	if typeName[0] == '*' {
+		suffix = "p_" + suffix
+		typeName = strings.TrimLeft(typeName, "*")
+	}
+	return generateFileName(originFilePath, suffix, typeName)
 }
 
 func (g *CustomGenerator) getEqualGeneratedFileName(originFilePath, typeName string) string {
-	return generateFileName(originFilePath, "equal", typeName)
+	suffix := "equal"
+	if typeName[0] == '*' {
+		typeName = strings.TrimLeft(typeName, "*")
+	}
+	return generateFileName(originFilePath, suffix, typeName)
 }
 
 func (g *CustomGenerator) generateEqualToFillManually(f *File, typeName string) {
@@ -105,6 +129,22 @@ func (g *CustomGenerator) generateEqualToFillManually(f *File, typeName string) 
 		).
 		Bool().
 		Block(
+			If(
+				Id("r").Op("==").Nil().Op("&&").
+					Id("another").Op("==").Nil(),
+			).Block(Return(True())),
+
+			If(
+				Parens(
+					Id("r").Op("==").Nil().Op("&&").
+						Id("another").Op("!=").Nil(),
+				).Op("||").
+					Parens(
+						Id("r").Op("!=").Nil().Op("&&").
+							Id("another").Op("==").Nil(),
+					),
+			).Block(Return(False())),
+
 			Comment("`equal` method has to be implemented manually"),
 		)
 }
@@ -134,6 +174,10 @@ func (g *CustomGenerator) generateEqualImplementation(f *File, typeName string) 
 }
 
 func (g *CustomGenerator) generateSliceToEqualers(f *File, typeName string) {
+	sliceEl := "r[i]"
+	if !g.isTypePointer(typeName) {
+		sliceEl = "&" + sliceEl
+	}
 	f.Func().
 		Params(
 			Id("r").Id(getStructName(typeName)),
@@ -147,14 +191,22 @@ func (g *CustomGenerator) generateSliceToEqualers(f *File, typeName string) {
 			For(
 				Id("i").Op(":=").Range().Id("r"),
 			).Block(
-				Id("equalerSl[i]").Op("=").Id("r[i]"),
+				Id("equalerSl[i]").Op("=").Id(sliceEl),
 			),
 
 			Return(Id("equalerSl")),
 		)
 }
 
+func (g *CustomGenerator) isTypePointer(typeName string) bool {
+	return typeName[0] == '*'
+}
+
 func (g *CustomGenerator) generateContains(f *File, typeName string) {
+	elArg := "el"
+	if !g.isTypePointer(typeName) {
+		elArg = "&" + elArg
+	}
 	f.Func().
 		Params(
 			Id("r").Id(getStructName(typeName)),
@@ -171,19 +223,27 @@ func (g *CustomGenerator) generateContains(f *File, typeName string) {
 			Id("equalerSl").Op(":=").Id("r.sliceToEqualers").Call(),
 			Return(
 				Qual("github.com/doctornick42/gosli/lib", "Contains").
-					Call(Id("equalerSl"), Id("el")),
+					Call(Id("equalerSl"), Id(elArg)),
 			),
 		)
 }
 
 func (g *CustomGenerator) generateProcessSliceOperation(f *File, typeName string) {
+	castingType := typeName
+	untypedResEl := "untypedRes[i]"
+	structName := getStructName(typeName)
+	if g.isTypePointer(typeName) {
+	} else {
+		untypedResEl = "*" + untypedResEl
+		castingType = "*" + castingType
+	}
 	f.Func().
 		Params(
-			Id("r").Id(getStructName(typeName)),
+			Id("r").Id(structName),
 		).
 		Id("processSliceOperation").
 		Params(
-			Id("sl2").Id(getStructName(typeName)),
+			Id("sl2").Id(structName),
 			Id("f").Func().Params(
 				Index().Qual("github.com/doctornick42/gosli/lib", "Equaler"),
 				Index().Qual("github.com/doctornick42/gosli/lib", "Equaler"),
@@ -193,7 +253,7 @@ func (g *CustomGenerator) generateProcessSliceOperation(f *File, typeName string
 			),
 		).
 		Params(
-			Id("[]"+typeName),
+			Id(structName),
 			Error(),
 		).
 		Block(
@@ -212,24 +272,28 @@ func (g *CustomGenerator) generateProcessSliceOperation(f *File, typeName string
 			For(
 				Id("i").Op(":=").Range().Id("untypedRes"),
 			).Block(
-				Id("res[i]").Op("=").Id("untypedRes[i]").Dot(fmt.Sprintf("(%s)", typeName)),
+				Id("res[i]").Op("=").Id(untypedResEl).Dot(fmt.Sprintf("(%s)", castingType)),
 			),
 
-			Return(Id("res"), Nil()),
+			Return(
+				Id(structName).Call(Id("res")),
+				Nil(),
+			),
 		)
 }
 
 func (g *CustomGenerator) generateGetUnion(f *File, typeName string) {
+	structName := getStructName(typeName)
 	f.Func().
 		Params(
-			Id("r").Id(getStructName(typeName)),
+			Id("r").Id(structName),
 		).
 		Id("GetUnion").
 		Params(
 			Id("sl2").Index().Id(typeName),
 		).
 		Params(
-			Index().Id(typeName),
+			Id(structName),
 			Error(),
 		).
 		Block(
@@ -243,16 +307,17 @@ func (g *CustomGenerator) generateGetUnion(f *File, typeName string) {
 }
 
 func (g *CustomGenerator) generateInFirstOnly(f *File, typeName string) {
+	structName := getStructName(typeName)
 	f.Func().
 		Params(
-			Id("r").Id(getStructName(typeName)),
+			Id("r").Id(structName),
 		).
 		Id("InFirstOnly").
 		Params(
 			Id("sl2").Index().Id(typeName),
 		).
 		Params(
-			Index().Id(typeName),
+			Id(structName),
 			Error(),
 		).
 		Block(
