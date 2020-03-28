@@ -2,6 +2,7 @@ package gen
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"unicode"
 
@@ -41,7 +42,7 @@ func generateInfrastructure(f *File, typeName string) {
 }
 
 func generateFileName(originFilePath, suffix, typeName string) string {
-	splitted := strings.Split(originFilePath, "/")
+	splitted := strings.Split(originFilePath, string(os.PathSeparator))
 
 	shortFileName := splitted[len(splitted)-1]
 	generatedName := strings.ToLower(typeName)

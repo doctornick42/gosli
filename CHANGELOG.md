@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.1] - 2020-03-29
+### Fixed
+- The OS's path separator is now used in the arguments
+
 ## [0.3.0] - 2020-02-29
 ### Added
 - Generated structures now are divided for two: slice of pointers and slice of values.
